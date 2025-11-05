@@ -77,6 +77,9 @@
       margin-top: 10px;
       text-align: right;
     }
+    h3 {
+      margin-bottom: 4px;
+    }
   </style>
 </head>
 <body>
@@ -92,8 +95,13 @@
   </div>
 
   <div class="card">
-    <h2>สรุปการใช้งานฟังก์ชั่น</h2>
+    <h2>สรุปการใช้งานรวมทุกวัน</h2>
     <div id="summaryArea">ยังไม่ได้วิเคราะห์ไฟล์</div>
+  </div>
+
+  <div class="card">
+    <h2>สรุปการใช้งานแยกตามวันที่</h2>
+    <div id="perDateArea" class="small">ยังไม่มีข้อมูล กรุณาเลือกไฟล์แล้วกด "วิเคราะห์ log"</div>
   </div>
 
   <div class="card">
@@ -120,6 +128,7 @@
     const fileInput = document.getElementById("logFiles");
     const summaryArea = document.getElementById("summaryArea");
     const detailArea = document.getElementById("detailArea");
+    const perDateArea = document.getElementById("perDateArea");
 
     analyzeBtn.addEventListener("click", () => {
       const files = fileInput.files;
@@ -130,6 +139,7 @@
 
       summaryArea.textContent = "กำลังอ่านไฟล์...";
       detailArea.textContent = "";
+      perDateArea.textContent = "";
 
       const readers = [];
       const contents = [];
@@ -143,8 +153,9 @@
       Promise.all(readers).then(() => {
         const combinedText = contents.map(c => c.text).join("\n");
         const result = analyzeLogs(combinedText);
-        renderSummary(result, contents.length);
-        renderDetails(result);
+        renderSummary(result.totalStats, contents.length);
+        renderDetails(result.totalStats);
+        renderPerDate(result.perDateStats);
       }).catch(err => {
         console.error(err);
         summaryArea.textContent = "เกิดข้อผิดพลาดในการอ่านไฟล์";
@@ -160,52 +171,78 @@
       });
     }
 
-    function escapeRegExp(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
     // ดึง time="xxxx" จากบรรทัด log ถ้ามี
     function extractTimeFromLine(line) {
       const match = line.match(/time="([^"]+)"/);
       return match ? match[1] : "";
     }
 
+    // ตัด date ออกจาก time string (เช่น "2025-11-02")
+    function extractDateFromTimeStr(timeStr) {
+      if (!timeStr) return null;
+      // รูปแบบส่วนใหญ่จะเป็น 2025-11-02T21:49:04+07:00
+      return timeStr.substring(0, 10); // YYYY-MM-DD
+    }
+
+    function initStat(label) {
+      return {
+        label: label,
+        count: 0,
+        firstTime: null,
+        lastTime: null,
+        samples: []
+      };
+    }
+
+    function updateStat(stat, timeStr, line) {
+      stat.count++;
+      if (timeStr) {
+        if (!stat.firstTime) {
+          stat.firstTime = timeStr;
+        }
+        stat.lastTime = timeStr;
+      }
+      if (stat.samples.length < 5) {
+        stat.samples.push(line);
+      }
+    }
+
     function analyzeLogs(text) {
       const lines = text.split(/\r?\n/);
 
-      // เตรียม structure สำหรับเก็บผล
-      const stats = {};
+      // รวมทุกวัน
+      const totalStats = {};
       Object.keys(FUNCTION_PATTERNS).forEach(key => {
-        stats[key] = {
-          label: FUNCTION_PATTERNS[key],
-          count: 0,
-          firstTime: null,
-          lastTime: null,
-          samples: []
-        };
+        totalStats[key] = initStat(FUNCTION_PATTERNS[key]);
       });
 
-      // วิ่งทีละบรรทัด หา pattern
+      // แยกตามวันที่
+      const perDateStats = {}; // { "2025-11-02": { pattern: statObj, ... }, ... }
+
       for (const line of lines) {
+        const timeStr = extractTimeFromLine(line);
+        const dateStr = extractDateFromTimeStr(timeStr);
+
         for (const pattern of Object.keys(FUNCTION_PATTERNS)) {
           if (line.includes(pattern)) {
-            const timeStr = extractTimeFromLine(line);
-            const info = stats[pattern];
-            info.count++;
+            // รวมทุกวัน
+            updateStat(totalStats[pattern], timeStr, line);
 
-            if (!info.firstTime) {
-              info.firstTime = timeStr;
-            }
-            info.lastTime = timeStr;
-
-            if (info.samples.length < 5) {
-              info.samples.push(line);
+            // แยกตามวันที่ (ถ้ามี date)
+            if (dateStr) {
+              if (!perDateStats[dateStr]) {
+                perDateStats[dateStr] = {};
+              }
+              if (!perDateStats[dateStr][pattern]) {
+                perDateStats[dateStr][pattern] = initStat(FUNCTION_PATTERNS[pattern]);
+              }
+              updateStat(perDateStats[dateStr][pattern], timeStr, line);
             }
           }
         }
       }
 
-      return stats;
+      return { totalStats, perDateStats };
     }
 
     function renderSummary(stats, fileCount) {
@@ -213,7 +250,7 @@
 
       let html = "";
       html += `<div class="summary-count">จำนวนไฟล์ที่วิเคราะห์: ${fileCount} ไฟล์</div>`;
-      html += `<div class="summary-count">จำนวนการเรียกใช้งานฟังก์ชั่นทั้งหมด: ${totalCalls} ครั้ง</div>`;
+      html += `<div class="summary-count">จำนวนการเรียกใช้งานฟังก์ชั่นทั้งหมด (รวมทุกวัน): ${totalCalls} ครั้ง</div>`;
 
       html += `<table>
         <thead>
@@ -259,12 +296,64 @@
           html += `<div class="small">ยังไม่พบบรรทัด log ของฟังก์ชั่นนี้</div>`;
           return;
         }
-        html += `<div class="small">จำนวนทั้งหมด: ${info.count} ครั้ง</div>`;
+        html += `<div class="small">จำนวนทั้งหมด (รวมทุกวัน): ${info.count} ครั้ง</div>`;
         html += `<div class="small">ตัวอย่างบรรทัด log (สูงสุด 5 บรรทัด):</div>`;
         html += `<pre class="sample">${info.samples.join("\n")}</pre>`;
       });
 
       detailArea.innerHTML = html;
+    }
+
+    function renderPerDate(perDateStats) {
+      const dates = Object.keys(perDateStats).sort();
+      if (dates.length === 0) {
+        perDateArea.innerHTML = "ยังไม่พบข้อมูลวันที่ใน log (ไม่มี time=\"...\")";
+        return;
+      }
+
+      let html = "";
+
+      dates.forEach(dateStr => {
+        const statsForDate = perDateStats[dateStr];
+
+        // เอาเฉพาะฟังก์ชั่นที่มีการใช้งานในวันนั้น
+        const entries = Object.entries(statsForDate).filter(([, info]) => info.count > 0);
+        if (entries.length === 0) return;
+
+        const totalForDate = entries.reduce((sum, [, info]) => sum + info.count, 0);
+
+        html += `<h3>วันที่ ${dateStr} <span class="small">(รวม ${totalForDate} ครั้ง)</span></h3>`;
+        html += `<table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>ฟังก์ชั่น</th>
+              <th>Endpoint</th>
+              <th>จำนวนครั้งในวันนั้น</th>
+              <th>เวลาแรก</th>
+              <th>เวลาล่าสุด</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
+
+        entries.forEach(([pattern, info], index) => {
+          html += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${info.label}</td>
+              <td><code>${pattern}</code></td>
+              <td>${info.count}</td>
+              <td>${info.firstTime || "-"}</td>
+              <td>${info.lastTime || "-"}</td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+      });
+
+      perDateArea.innerHTML = html;
     }
   </script>
 </body>
