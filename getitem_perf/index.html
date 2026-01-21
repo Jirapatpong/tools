@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Log Analyzer V9.1 - Ticket Print Fixed</title>
+    <title>Log Analyzer V9.2 - Updated SLA Groups</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -34,7 +34,8 @@
         .card-stat strong { font-size: 1.6em; line-height: 1.2; display: block; }
         
         .sla-card { flex: 1; padding: 10px 2px; border-radius: 6px; text-align: center; border: 1px solid #eee; }
-        .sla-card small { display: block; font-size: 1.2em; font-weight: 800; margin-bottom: 5px; } /* ขยายตัวหนังสือ SLA ตามคำขอ */
+        /* SLA Label ขนาดใหญ่ตามความต้องการ */
+        .sla-card small { display: block; font-size: 1.2em; font-weight: 800; margin-bottom: 5px; } 
         .sla-card strong { font-size: 1.3em; }
 
         .chart-bar { padding: 10px 20px; height: 160px; border-bottom: 1px solid #eee; }
@@ -51,7 +52,7 @@
 <body>
 
 <div class="header-upload">
-    <strong>Log Analyzer V9.1</strong> | 
+    <strong>Log Analyzer V9.2</strong> | 
     <input type="file" id="fileInput" accept=".log,.txt" multiple>
     <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportEverything()">✨ Export Multi-Module Excel</button>
 </div>
@@ -123,7 +124,6 @@
         let tempGetitem = null;
         let tempTicket = null;
 
-        // ปรับปรุง Regex ให้รองรับทั้งตัวเล็กตัวใหญ่และอักขระพิเศษหน้า Keyword
         const reGetReq = /Getitem Request/i;
         const reGetRes = /Getitem Response/i;
         const reTicReq = /Endtransaction Request/i;
@@ -131,7 +131,6 @@
         const reEdcErr = /EDC Response Error/i;
 
         lines.forEach(line => {
-            // 1. Getitem
             if (reGetReq.test(line)) tempGetitem = cleanTimestamp(line);
             else if (reGetRes.test(line) && tempGetitem) {
                 const res = cleanTimestamp(line);
@@ -139,7 +138,6 @@
                 tempGetitem = null;
             }
 
-            // 2. Ticket Print
             if (reTicReq.test(line)) tempTicket = cleanTimestamp(line);
             else if (reTicRes.test(line) && tempTicket) {
                 const res = cleanTimestamp(line);
@@ -147,7 +145,6 @@
                 tempTicket = null;
             }
 
-            // 3. EDC Error
             if (reEdcErr.test(line)) ticketErrorCount++;
         });
 
@@ -169,11 +166,8 @@
         activeModule = module;
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById(`nav-${module}`).classList.add('active');
-        
-        // ปรับหัวตารางให้สอดคล้อง
         document.getElementById('th-start').innerText = module === 'getitem' ? 'Request Timestamp' : 'EndTransaction Req';
         document.getElementById('th-end').innerText = module === 'getitem' ? 'Response Timestamp' : 'Print Completed';
-        
         updateUI();
     }
 
@@ -193,7 +187,6 @@
         const moduleData = fileData[activeModule];
         document.getElementById('mainContent').style.display = 'block';
 
-        // Stats UI
         let statsHTML = `
             <div class="card-stat stat-avg"><small>AVG TIME</small><strong>${moduleData.avg} ms</strong></div>
             <div class="card-stat stat-min"><small>MIN TIME</small><strong>${moduleData.min.toLocaleString()} ms</strong></div>
@@ -205,11 +198,11 @@
         }
         document.getElementById('statsBar').innerHTML = statsHTML;
 
-        // SLA UI
         let slaHTML = '';
         if (activeModule === 'getitem') {
-            const labels = ['< 1s', '1-1.5s', '1.5-2s', '2-3s', '> 3s'];
-            const ranges = [[0,1000],[1000,1500],[1500,2000],[2000,3000],[3000,9999999]];
+            // ปรับกลุ่ม SLA ใหม่ตามที่ต้องการ
+            const labels = ['< 1s', '1 - 1.5s', '1.6 - 2s', '2 - 3s', '> 3s'];
+            const ranges = [[0,1000],[1000,1500],[1501,2000],[2001,3000],[3001,9999999]];
             const colors = ['var(--success)','var(--info)','var(--normal)','var(--warning)','var(--danger)'];
             slaHTML = labels.map((l, i) => {
                 const count = moduleData.pairs.filter(p => p.duration >= ranges[i][0] && p.duration < ranges[i][1]).length;
@@ -217,8 +210,9 @@
                 return `<div class="sla-card"><small>${l}</small><strong style="color:${colors[i]}">${pct}%</strong></div>`;
             }).join('');
         } else {
-            const labels = ['< 5s', '5-6s', '7-8s', '> 8s'];
-            const ranges = [[0,5000],[5000,6000],[6000,8000],[8000,9999999]];
+            // ปรับกลุ่ม SLA ใหม่ตามที่ต้องการ
+            const labels = ['< 5s', '5 - 5.9s', '6 - 7s', '> 7s'];
+            const ranges = [[0,5000],[5000,5999],[6000,7000],[7001,9999999]];
             const colors = ['var(--success)','var(--info)','var(--warning)','var(--danger)'];
             slaHTML = labels.map((l, i) => {
                 const count = moduleData.pairs.filter(p => p.duration >= ranges[i][0] && p.duration < ranges[i][1]).length;
@@ -228,9 +222,8 @@
         }
         document.getElementById('slaBar').innerHTML = slaHTML;
 
-        // Table UI
         document.getElementById('tableBody').innerHTML = moduleData.pairs.length > 0 
-            ? moduleData.pairs.map((p, i) => `<tr class="${p.duration > (activeModule==='getitem'?3000:8000)?'slow-danger':''}"><td>${i+1}</td><td>${p.reqTime}</td><td>${p.resTime}</td><td style="text-align:right"><strong>${p.duration.toLocaleString()}</strong></td></tr>`).join('')
+            ? moduleData.pairs.map((p, i) => `<tr class="${p.duration > (activeModule==='getitem'?3000:7000)?'slow-danger':''}"><td>${i+1}</td><td>${p.reqTime}</td><td>${p.resTime}</td><td style="text-align:right"><strong>${p.duration.toLocaleString()}</strong></td></tr>`).join('')
             : '<tr><td colspan="4" style="text-align:center; padding:20px;">ไม่พบชุดข้อมูลในหมวดหมู่นี้</td></tr>';
 
         updateChart(moduleData.pairs);
@@ -264,7 +257,6 @@
             sheet.getCell('A1').font = { bold: true, color:{argb:'FFFFFFFF'} };
             sheet.getCell('A1').fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1A73E8'} };
             
-            // Layout สรุป 2 Module คู่กัน
             sheet.getCell('A4').value = 'GETITEM STATS'; sheet.getCell('A4').font = {bold:true};
             sheet.getCell('A5').value = 'AVG: ' + f.getitem.avg;
             sheet.getCell('A6').value = 'TOTAL: ' + f.getitem.total;
@@ -279,7 +271,7 @@
             f.ticket.pairs.forEach((p, i) => sheet.addRow([i+1, 'Ticket', p.reqTime, p.resTime, p.duration]));
         }
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Performance_V9_1.xlsx`);
+        saveAs(new Blob([buffer]), `Performance_V9_2.xlsx`);
     }
 </script>
 </body>
