@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>Log Analyzer V9.3 - Merged SLA Groups</title>
+    <title>Log Analyzer V9.4 - Complete Excel Report</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -51,9 +51,9 @@
 <body>
 
 <div class="header-upload">
-    <strong>Log Analyzer V9.3</strong> | 
+    <strong>Log Analyzer V9.4</strong> | 
     <input type="file" id="fileInput" accept=".log,.txt" multiple>
-    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportEverything()">✨ Export Multi-Module Excel</button>
+    <button id="exportBtn" class="export-btn" style="display:none;" onclick="exportEverything()">✨ Export Complete Report to Excel</button>
 </div>
 
 <div id="moduleNav" class="main-nav" style="display:none;">
@@ -136,14 +136,12 @@
                 if (res) getitemPairs.push({ reqTime: tempGetitem.formatted, resTime: res.formatted, hour: tempGetitem.hour, duration: res.dateObj - tempGetitem.dateObj });
                 tempGetitem = null;
             }
-
             if (reTicReq.test(line)) tempTicket = cleanTimestamp(line);
             else if (reTicRes.test(line) && tempTicket) {
                 const res = cleanTimestamp(line);
                 if (res) ticketPairs.push({ reqTime: tempTicket.formatted, resTime: res.formatted, hour: tempTicket.hour, duration: res.dateObj - tempTicket.dateObj });
                 tempTicket = null;
             }
-
             if (reEdcErr.test(line)) ticketErrorCount++;
         });
 
@@ -188,8 +186,8 @@
 
         let statsHTML = `
             <div class="card-stat stat-avg"><small>AVG TIME</small><strong>${moduleData.avg} ms</strong></div>
-            <div class="card-stat stat-min"><small>MIN TIME</small><strong>${moduleData.min.toLocaleString()} ms</strong></div>
-            <div class="card-stat stat-max"><small>MAX TIME</small><strong>${moduleData.max.toLocaleString()} ms</strong></div>
+            <div class="card-stat stat-min" style="background:var(--success-bg); color:var(--success);"><small>MIN TIME</small><strong>${moduleData.min.toLocaleString()} ms</strong></div>
+            <div class="card-stat stat-max" style="background:var(--danger-bg); color:var(--danger);"><small>MAX TIME</small><strong>${moduleData.max.toLocaleString()} ms</strong></div>
             <div class="card-stat" style="background:#f1f3f4;"><small>TOTAL COUNT</small><strong>${moduleData.total.toLocaleString()}</strong></div>
         `;
         if (activeModule === 'ticket') {
@@ -199,7 +197,6 @@
 
         let slaHTML = '';
         if (activeModule === 'getitem') {
-            // ปรับกลุ่ม SLA: รวมกลุ่ม < 1s และ 1 - 1.5s เข้าด้วยกัน
             const labels = ['ไม่เกิน 1.5s', '1.6 - 2s', '2 - 3s', '> 3s'];
             const ranges = [[0,1500],[1501,2000],[2001,3000],[3001,9999999]];
             const colors = ['var(--success)','var(--normal)','var(--warning)','var(--danger)'];
@@ -248,28 +245,57 @@
 
     async function exportEverything() {
         const workbook = new ExcelJS.Workbook();
+        const canvas = document.getElementById('responseChart');
+        const ratio = canvas.height / canvas.width;
+
         for (const f of allFilesData) {
             const sheet = workbook.addWorksheet(f.fileName.substring(0,31));
             sheet.mergeCells('A1:E2');
-            sheet.getCell('A1').value = `REPORT: ${f.fileName}`;
-            sheet.getCell('A1').font = { bold: true, color:{argb:'FFFFFFFF'} };
-            sheet.getCell('A1').fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1A73E8'} };
-            
-            sheet.getCell('A4').value = 'GETITEM STATS'; sheet.getCell('A4').font = {bold:true};
-            sheet.getCell('A5').value = 'AVG: ' + f.getitem.avg;
-            sheet.getCell('A6').value = 'TOTAL: ' + f.getitem.total;
+            sheet.getCell('A1').value = `COMPREHENSIVE PERFORMANCE REPORT: ${f.fileName}`;
+            sheet.getCell('A1').font = { bold: true, size: 14, color: { argb: 'FFFFFFFF'} };
+            sheet.getCell('A1').fill = { type: 'pattern', pattern:'solid', fgColor:{ argb: 'FF1A73E8'}};
+            sheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
 
-            sheet.getCell('D4').value = 'TICKET PRINT STATS'; sheet.getCell('D4').font = {bold:true};
-            sheet.getCell('D5').value = 'AVG: ' + f.ticket.avg;
-            sheet.getCell('D6').value = 'TOTAL: ' + f.ticket.total;
-            sheet.getCell('D7').value = 'EDC ERRORS: ' + f.ticket.errors;
+            // --- GETITEM SECTION ---
+            sheet.getCell('A4').value = 'GETITEM ANALYSIS'; sheet.getCell('A4').font = {bold:true, size:12};
+            sheet.getCell('A5').value = 'AVG (ms)'; sheet.getCell('B5').value = parseFloat(f.getitem.avg);
+            sheet.getCell('A6').value = 'MIN (ms)'; sheet.getCell('B6').value = f.getitem.min;
+            sheet.getCell('A7').value = 'MAX (ms)'; sheet.getCell('B7').value = f.getitem.max;
+            sheet.getCell('A8').value = 'TOTAL'; sheet.getCell('B8').value = f.getitem.total;
 
-            sheet.getRow(10).values = ['No.', 'Module', 'Start', 'End', 'Duration (ms)'];
+            // --- TICKET SECTION ---
+            sheet.getCell('D4').value = 'TICKET PRINT ANALYSIS'; sheet.getCell('D4').font = {bold:true, size:12};
+            sheet.getCell('D5').value = 'AVG (ms)'; sheet.getCell('E5').value = parseFloat(f.ticket.avg);
+            sheet.getCell('D6').value = 'MIN (ms)'; sheet.getCell('E6').value = f.ticket.min;
+            sheet.getCell('D7').value = 'MAX (ms)'; sheet.getCell('E7').value = f.ticket.max;
+            sheet.getCell('D8').value = 'TOTAL'; sheet.getCell('E8').value = f.ticket.total;
+            sheet.getCell('D9').value = 'EDC ERRORS'; sheet.getCell('E9').value = f.ticket.errors;
+
+            // Chart
+            updateChart(f.getitem.pairs);
+            const imgG = workbook.addImage({ base64: canvas.toDataURL(), extension: 'png' });
+            sheet.addImage(imgG, { tl: { col: 0, row: 12 }, ext: { width: 350, height: 350*ratio } });
+
+            updateChart(f.ticket.pairs);
+            const imgT = workbook.addImage({ base64: canvas.toDataURL(), extension: 'png' });
+            sheet.addImage(imgT, { tl: { col: 3, row: 12 }, ext: { width: 350, height: 350*ratio } });
+
+            // Raw Data Header
+            const rowStart = 28;
+            const hRow = sheet.getRow(rowStart);
+            hRow.values = ['No.', 'Module', 'Start Timestamp', 'End Timestamp', 'Duration (ms)'];
+            hRow.eachCell(c => { c.font={bold:true, color:{argb:'FFFFFFFF'}}; c.fill={type:'pattern', pattern:'solid', fgColor:{argb:'FF1A73E8'}}; });
+
             f.getitem.pairs.forEach((p, i) => sheet.addRow([i+1, 'Getitem', p.reqTime, p.resTime, p.duration]));
             f.ticket.pairs.forEach((p, i) => sheet.addRow([i+1, 'Ticket', p.reqTime, p.resTime, p.duration]));
+
+            sheet.getColumn(3).width = 25; sheet.getColumn(4).width = 25;
+            sheet.getColumn(1).alignment = {horizontal: 'center'};
         }
+
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Performance_V9_3.xlsx`);
+        saveAs(new Blob([buffer]), `Final_Performance_Report_V9_4.xlsx`);
+        switchModule(activeModule);
     }
 </script>
 </body>
