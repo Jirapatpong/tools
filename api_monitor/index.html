@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Network Log Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Upgraded to xlsx-js-style to support colors and styling in Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .metric-card { transition: transform 0.2s, box-shadow 0.2s; }
@@ -29,9 +30,22 @@
         </div>
 
         <div id="results" class="hidden">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                 <h2 class="text-2xl font-semibold">2. Analysis Dashboard</h2>
-                <button id="exportBtn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition duration-300">Export to Excel</button>
+                <div class="flex gap-2">
+                    <button id="exportRawBtn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Export Raw Data
+                    </button>
+                    <button id="exportBtn" class="bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-emerald-700 transition duration-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                             <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                        </svg>
+                        Export Report
+                    </button>
+                </div>
             </div>
             
             <div id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -59,12 +73,32 @@
     <script>
         const analyzeBtn = document.getElementById('analyzeBtn');
         const exportBtn = document.getElementById('exportBtn');
+        const exportRawBtn = document.getElementById('exportRawBtn');
         const logFilesInput = document.getElementById('logFiles');
         const resultsDiv = document.getElementById('results');
         const dashboardDiv = document.getElementById('dashboard');
         const comparisonTable = document.getElementById('comparisonTable');
         const tracerouteTable = document.getElementById('tracerouteTable');
         let parsedData = [];
+
+        // Helper for styling cells
+        const styles = {
+            header: {
+                fill: { fgColor: { rgb: "4F46E5" } }, // Indigo-600
+                font: { color: { rgb: "FFFFFF" }, bold: true },
+                alignment: { horizontal: "center", vertical: "center", wrapText: true }, // Added wrapText for IPs
+                border: {
+                    top: { style: "thin", color: { rgb: "000000" } },
+                    bottom: { style: "thin", color: { rgb: "000000" } },
+                }
+            },
+            cellCenter: {
+                alignment: { horizontal: "center", vertical: "center", wrapText: true }
+            },
+            cellLeft: {
+                alignment: { horizontal: "left", vertical: "center", wrapText: true }
+            }
+        };
 
         analyzeBtn.addEventListener('click', () => {
             const files = logFilesInput.files;
@@ -107,10 +141,56 @@
             });
         });
 
+        // ---------------------------------------------------------
+        // Export Raw Data (Flat format)
+        // ---------------------------------------------------------
+        exportRawBtn.addEventListener('click', () => {
+            if (parsedData.length === 0) return;
+
+            const rawData = parsedData.map(d => ({
+                'Log_Filename': d.fileName,
+                'PC_Name': d.computerName,
+                'Timestamp': d.dateTime,
+                'Target_Host_IP': d.targetHost,
+                'Target_Ping_Avg_ms': d.targetPingAvg !== 'N/A' ? d.targetPingAvg : null,
+                'Target_Packet_Loss_Pct': d.targetPacketLoss !== 'N/A' ? d.targetPacketLoss : null,
+                'DNS_Resolution_ms': d.dnsResolutionTime,
+                'TCP_Connection_ms': d.curlTcpConn,
+                'TTFB_ms': d.curlTtfb,
+                'Total_API_Time_ms': d.curlTotalTime,
+                'Traceroute_Hop_Count': d.tracerouteHops.length,
+                'Traceroute_Timeouts': d.tracerouteTimeouts
+            }));
+
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(rawData);
+            
+            // Basic styling for header row in Raw Data
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({ r: 0, c: C });
+                if (!worksheet[address]) continue;
+                worksheet[address].s = styles.header;
+            }
+
+            const wscols = [
+                {wch: 30}, {wch: 20}, {wch: 25}, {wch: 15}, 
+                {wch: 20}, {wch: 20}, {wch: 20}, {wch: 20},
+                {wch: 15}, {wch: 20}, {wch: 20}, {wch: 20}
+            ];
+            worksheet['!cols'] = wscols;
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Raw Data");
+            XLSX.writeFile(workbook, "Network_Log_Raw_Data.xlsx");
+        });
+
+        // ---------------------------------------------------------
+        // Export Summary Report (Styled)
+        // ---------------------------------------------------------
         exportBtn.addEventListener('click', () => {
             const workbook = XLSX.utils.book_new();
 
-            // Sheet 1: Comparison Summary
+            // --- Sheet 1: Comparison Summary ---
             const summaryForExport = parsedData.map(d => ({
                 'PC Name': d.computerName,
                 'Date & Time': d.dateTime,
@@ -120,10 +200,28 @@
                 'Total API (ms)': d.curlTotalTime.toFixed(0),
                 'Traceroute Timeouts': d.tracerouteTimeouts
             }));
-            const summaryWorksheet = XLSX.utils.json_to_sheet(summaryForExport);
-            XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Comparison Summary");
+            
+            const summarySheet = XLSX.utils.json_to_sheet(summaryForExport);
+            
+            // Apply styles to Summary Sheet
+            const summaryRange = XLSX.utils.decode_range(summarySheet['!ref']);
+            for (let R = summaryRange.s.r; R <= summaryRange.e.r; ++R) {
+                for (let C = summaryRange.s.c; C <= summaryRange.e.c; ++C) {
+                    const address = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!summarySheet[address]) continue;
+                    
+                    if (R === 0) {
+                        summarySheet[address].s = styles.header;
+                    } else {
+                        summarySheet[address].s = styles.cellCenter;
+                    }
+                }
+            }
+            summarySheet['!cols'] = [{wch: 20}, {wch: 25}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 20}];
+            XLSX.utils.book_append_sheet(workbook, summarySheet, "Comparison Summary");
 
-            // Sheet 2: Traceroute Details (Pivoted and Cleaned)
+
+            // --- Sheet 2: Traceroute Details (IP in Header) ---
             const maxHops = Math.max(0, ...parsedData.flatMap(d => d.tracerouteHops.map(h => h.hop)));
             const validHops = [];
             for (let i = 1; i <= maxHops; i++) {
@@ -133,7 +231,25 @@
             }
 
             if (validHops.length > 0) {
-                const traceHeaders = ['PC Name', 'Date & Time', ...validHops.map(h => `Hop ${h}`), 'Average (ms)'];
+                // Generate Header with IP Addresses
+                const hopColHeaders = validHops.map(hopNum => {
+                    // Gather all unique IPs for this hop number
+                    const ips = parsedData.map(d => {
+                        const h = d.tracerouteHops.find(x => x.hop === hopNum);
+                        return h ? h.address : null;
+                    }).filter(Boolean);
+                    
+                    // Filter unique
+                    const uniqueIps = [...new Set(ips)];
+                    
+                    // Pick the first one for the header, append * if variable
+                    let ipLabel = uniqueIps.length > 0 ? uniqueIps[0] : '';
+                    if (uniqueIps.length > 1) ipLabel += ' *'; 
+                    
+                    return ipLabel ? `Hop ${hopNum}\n(${ipLabel})` : `Hop ${hopNum}`;
+                });
+
+                const traceHeaders = ['PC Name', 'Date & Time', ...hopColHeaders, 'Average (ms)'];
                 const traceRows = [traceHeaders];
 
                 parsedData.forEach(data => {
@@ -145,7 +261,9 @@
                         const hopData = data.tracerouteHops.find(h => h.hop === hopNum);
                         if (hopData && hopData.avgLatency !== 'N/A') {
                             const latency = parseFloat(hopData.avgLatency);
-                            row.push(latency.toFixed(0));
+                            // Cell Value: Just Latency
+                            const cellValue = `${latency.toFixed(0)}ms`;
+                            row.push(cellValue);
                             totalLatency += latency;
                             validHopCount++;
                         } else {
@@ -157,8 +275,30 @@
                     traceRows.push(row);
                 });
 
-                const traceWorksheet = XLSX.utils.aoa_to_sheet(traceRows);
-                XLSX.utils.book_append_sheet(workbook, traceWorksheet, "Traceroute Details");
+                const traceSheet = XLSX.utils.aoa_to_sheet(traceRows);
+
+                // Apply styles to Traceroute Sheet
+                const traceRange = XLSX.utils.decode_range(traceSheet['!ref']);
+                for (let R = traceRange.s.r; R <= traceRange.e.r; ++R) {
+                    for (let C = traceRange.s.c; C <= traceRange.e.c; ++C) {
+                        const address = XLSX.utils.encode_cell({ r: R, c: C });
+                        if (!traceSheet[address]) continue;
+                        
+                        if (R === 0) {
+                            traceSheet[address].s = styles.header;
+                        } else {
+                            traceSheet[address].s = styles.cellCenter;
+                        }
+                    }
+                }
+
+                // Adjust column widths (Standard width now since IP is in header)
+                const traceCols = [{wch: 20}, {wch: 25}];
+                validHops.forEach(() => traceCols.push({wch: 20})); // Adequate for header with IP
+                traceCols.push({wch: 15}); // Average col
+                traceSheet['!cols'] = traceCols;
+
+                XLSX.utils.book_append_sheet(workbook, traceSheet, "Traceroute Details");
             }
 
             XLSX.writeFile(workbook, "Network_Analysis_Report.xlsx");
@@ -210,10 +350,30 @@
                 return (value && !isNaN(parseFloat(value))) ? parseFloat(value) * multiplier : 0;
             };
 
+            const targetHostMatch = content.match(/Target Host:\s*([^\r\n]+)/);
+            const targetHost = targetHostMatch ? targetHostMatch[1].trim() : 'N/A';
+
+            const sections = content.split('=====');
+            const section3 = sections.find(s => s.includes('3. DNS LATENCY')) || '';
+            
+            let targetPingAvg = 'N/A';
+            let targetPacketLoss = 'N/A';
+
+            if (section3) {
+                const avgMatch = section3.match(/Average = (\d+)ms/);
+                if (avgMatch) targetPingAvg = parseInt(avgMatch[1]);
+
+                const lossMatch = section3.match(/Lost = \d+ \((\d+)% loss\)/);
+                if (lossMatch) targetPacketLoss = parseInt(lossMatch[1]);
+            }
+
             return {
                 fileName: fileName,
                 computerName: computerName,
                 dateTime: dateTime.toLocaleString(),
+                targetHost: targetHost,
+                targetPingAvg: targetPingAvg,
+                targetPacketLoss: targetPacketLoss,
                 tracerouteHops: parseTracerouteHops(content),
                 tracerouteTimeouts: (content.match(/Request timed out/g) || []).length,
                 dnsResolutionTime: getFloatStat(/DNS LATENCY.*?TotalMilliseconds\s+:\s+([\d.]+)/s, 1),
@@ -341,4 +501,3 @@
     </script>
 </body>
 </html>
-
