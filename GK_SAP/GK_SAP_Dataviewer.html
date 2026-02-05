@@ -2,10 +2,10 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>GK Analyzer v29 - Full Mirror Mapper</title>
+    <title>GK Analyzer v30 - Perfect Mirror</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --sap: #e67e22; --gk: #2980b9; --bg: #ecf0f1; }
+        :root { --primary: #2c3e50; --accent: #27ae60; --sap: #e67e22; --gk: #8e44ad; --bg: #ecf0f1; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--bg); overflow: hidden; }
         nav { background: var(--primary); color: white; display: flex; padding: 0 15px; height: 45px; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .tabs { display: flex; gap: 5px; height: 100%; align-items: flex-end; }
@@ -22,7 +22,7 @@
         .th-inner { padding: 8px; display: flex; align-items: center; justify-content: space-between; }
         td { border: 1px solid #eee; padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 25px; }
         .draggable-header { cursor: grab; background: #fffbe6; }
-        th.drag-over { background: #e8f8f5 !important; border: 2px dashed #27ae60 !important; }
+        th.drag-over { background: #e8f8f5 !important; border: 2px dashed #27ae60 !important; color: #27ae60; }
         .mapped-badge { font-size: 9px; background: #dff0d8; color: #3c763d; padding: 1px 3px; border-radius: 3px; margin-left: 5px; font-weight: normal; }
         td.empty-cell { background-color: #fff0f0; }
         .view-section { display: none; flex: 1; flex-direction: column; height: 100%; }
@@ -32,11 +32,11 @@
 <body>
 
 <nav>
-    <div style="font-weight:bold;">📦 GK Analyzer v29</div>
+    <div style="font-weight:bold;">📦 GK Analyzer v30</div>
     <div class="tabs">
         <div class="tab" onclick="switchMainTab('bi')">1. BI Overview</div>
         <div class="tab" onclick="switchMainTab('promo')">2. Promo Compare</div>
-        <div class="tab active" onclick="switchMainTab('master')">3. Master (Drag & Drop Mapper)</div>
+        <div class="tab active" onclick="switchMainTab('master')">3. Master (Full XML)</div>
     </div>
 </nav>
 
@@ -50,7 +50,7 @@
                 <div class="toolbar">
                     <b style="color:var(--sap);">🟧 SAP Source (Sku.json)</b>
                     <input type="file" id="skuInput" accept=".json" style="font-size:11px;">
-                    <span style="font-size:10px; color:#666; margin-left:auto;">* ลากหัวคอลัมน์จากที่นี่ไปวางที่หัวข้อ GK ด้านล่างเพื่อ Map ข้อมูล</span>
+                    <span style="font-size:10px; color:#666; margin-left:auto;">* Drag columns to map below</span>
                 </div>
                 <div class="table-wrapper"><table id="sapTable"><thead id="sapHead"></thead><tbody id="sapBody"></tbody></table></div>
             </div>
@@ -59,8 +59,8 @@
 
             <div class="panel" id="p-bottom">
                 <div class="toolbar">
-                    <b style="color:var(--gk);">🟪 GK Mirror Target (Haribo Blueprint)</b>
-                    <button class="btn-green" onclick="exportMasterXML()">⬇ Export True Mirror XML</button>
+                    <b style="color:var(--gk);">🟪 GK Target (Haribo Blueprint)</b>
+                    <button class="btn-green" onclick="exportMasterXML()">⬇ Export XML (100% Mirror)</button>
                     <button class="btn-tool" onclick="resetMapping()" style="margin-left:5px; font-size:10px;">↺ Reset</button>
                 </div>
                 <div class="table-wrapper"><table id="gkTable"><thead id="gkHead"></thead><tbody id="gkBody"></tbody></table></div>
@@ -70,31 +70,32 @@
 </div>
 
 <script>
-    // FULL SCHEMA อ้างอิงลำดับและฟิลด์จากไฟล์ Haribo XML 100%
+    // FULL SCHEMA อิงตามไฟล์ Haribo.xml เป๊ะๆ (ใช้สำหรับ Table View และ Mapping Key)
     const GK_SCHEMA = [
         "BusinessUnitID", "ItemID", "BonText", "Description", "TaxGroupID", "UpdateStockFlag", 
         "BaseUOMCode", "MinimumShelfLifeDayCount", "ClassCode", "TaxExemptCode", "WarrantyPeriod", 
         "LabelType", "ItemUsageTypeCode", "GlobalLifeDayCount", "ShelfLifeDayCountPercent", 
-        "PhoneCardLoadingTypeCode", "DefaultReceivingLocation", "CostItemFlag", "MerchandisePlanningTypeCode", 
-        "MainSupplierID", "BaseUOMConsumerPackageNetContent", "BaseUOMConsumerPackageContentsUOMCode", 
-        "BaseUOMConsumerPackageBasePriceContent", "BaseUOMConsumerPackageBasePriceContentsUOMCode", 
-        "DistributingWarehouseID", "AssortmentID", "ThirdPartyAssortmentID", "TransportAssociationID", 
-        "DefaultSellingUOMCode", " TareID", "AfterPackLeftLifeDayCount", "ScalesFlag", "LabellingMachineFlag",
+        "PhoneCardLoadingTypeCode", "DefaultReceivingLocation", "CostItemFlag", 
+        "MerchandisePlanningTypeCode", "MainSupplierID", "BaseUOMConsumerPackageNetContent", 
+        "BaseUOMConsumerPackageContentsUOMCode", "BaseUOMConsumerPackageBasePriceContent", 
+        "BaseUOMConsumerPackageBasePriceContentsUOMCode", "DistributingWarehouseID", "AssortmentID", 
+        "ThirdPartyAssortmentID", "TransportAssociationID", "DefaultSellingUOMCode",
         "UOMCode", "ConversionNumerator", "ConversionDenominator", "ConsumerPackageNetWeight", 
         "ConsumerPackageWeightUOMCode", "ConsumerPackageSizeUOMCode", "ConsumerPackageBasePriceUOMCode", 
         "POSDepartmentID", "MainPOSItemID", "StatusCode", "MaximumStockQuantity", "MinimumStockQuantity", 
         "ListingEffectiveDate", "ListingExpirationDate", "MainMerchandiseHierarchyGroupID", 
-        "ProhibitReturnFlag", "PriceEntryRequiredFlag", "AllowFoodStampFlag", "WICFlag", 
-        "AuthorizedForSaleFlag", "DiscountFlag", "BonuspointsFlag", "QuantityInputTypeCode", 
-        "QuantityInputMethod", "PriceChangeTypeCode", "WeightEntryRequiredFlag", 
-        "DefaultLayoutClass", "DefaultLabelCount", "Price", "EffectiveDate", "ExpirationDate", 
-        "PriceTypeCode", "PosItemID", "PosIdentityTypeCode", "MerchandiseHierarchyGroupID"
+        "Price", "EffectiveDate", "ExpirationDate", "PriceTypeCode", "PosItemID", "PosIdentityTypeCode", 
+        "MerchandiseHierarchyGroupID"
     ];
 
     const DEFAULT_MAP = {
         "BusinessUnitID": "LOCNR", "ItemID": "MATNR", "BonText": "MAKTX", "Description": "MAKTX",
         "MainPOSItemID": "EAN_List", "Price": "SAP_Price", "BaseUOMCode": "MEINH", 
-        "TaxGroupID": "CONST_A1", "UpdateStockFlag": "CONST_true", "ClassCode": "CONST_HAWA"
+        "TaxGroupID": "CONST_A1", "UpdateStockFlag": "CONST_true", "ClassCode": "CONST_HAWA",
+        "UOMCode": "MEINH", "DefaultSellingUOMCode": "MEINH",
+        "BaseUOMConsumerPackageContentsUOMCode": "MEINH", "BaseUOMConsumerPackageBasePriceContentsUOMCode": "MEINH",
+        "ConsumerPackageWeightUOMCode": "CONST_ST", "ConsumerPackageSizeUOMCode": "MEINH", "ConsumerPackageBasePriceUOMCode": "MEINH",
+        "PosItemID": "EAN_List", "PosIdentityTypeCode": "CONST_10"
     };
 
     let APP = { sapData: [], sapKeys: [], currentMap: {...DEFAULT_MAP}, gkData: [] };
@@ -108,7 +109,6 @@
         APP.sapData = list.map(item => {
             let flat = {};
             flattenJSON(item, flat, "");
-            // Advanced Price/EAN Mining
             let u = item.UOM?.find(x => x.MEINH === 'EA') || item.UOM?.[0];
             flat['SAP_Price'] = u?.CONDITION?.find(c => c.KSCHL === 'VKP1')?.CONDITION_VALUE?.[0]?.KWERT || "0";
             flat['EAN_List'] = u?.EAN11 || u?.EAN?.[0]?.EAN11 || "";
@@ -174,25 +174,30 @@
 
     function resetMapping() { APP.currentMap = {...DEFAULT_MAP}; applyMapping(); }
 
+    // --- XML EXPORT (FORCED TAGS) ---
     function exportMasterXML() {
         if(!APP.gkData.length) return alert("Please load data first");
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<ItemList xmlns:importDomain="http://www.gk-software.com/storeweaver/master_data/import_domain/2.2.0" xsi:schemaLocation="http://www.gk-software.com/storeweaver/master_data/item/3.4.0 xsd/masterData_Item.xsd" NumberOfItems="${APP.gkData.length}" xmlns="http://www.gk-software.com/storeweaver/master_data/item/3.4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n`;
         
         APP.gkData.forEach(r => {
-            xml += `\t<Item ChangeType="${r.ChangeType || 'DIRECT'}">\n`;
-            xml += `\t\t<BusinessUnitAssignment>\n\t\t\t<BusinessUnitID>${r.BusinessUnitID}</BusinessUnitID>\n\t\t</BusinessUnitAssignment>\n`;
-            xml += `\t\t<ItemID>${r.ItemID}</ItemID>\n`;
-            xml += `\t\t<BonText>${r.BonText}</BonText>\n`;
-            xml += `\t\t<Description>${r.Description}</Description>\n`;
-            xml += `\t\t<TaxGroupID>${r.TaxGroupID}</TaxGroupID>\n`;
+            xml += `\t<Item ChangeType="DIRECT">\n`;
+            
+            // 1. Root Level Fields
+            xml += `\t\t<BusinessUnitAssignment>\n\t\t\t<BusinessUnitID>${r.BusinessUnitID || ''}</BusinessUnitID>\n\t\t</BusinessUnitAssignment>\n`;
+            xml += `\t\t<ItemID>${r.ItemID || ''}</ItemID>\n`;
+            xml += `\t\t<BonText>${escapeXml(r.BonText || '')}</BonText>\n`;
+            xml += `\t\t<Description>${escapeXml(r.Description || '')}</Description>\n`;
+            xml += `\t\t<TaxGroupID>${r.TaxGroupID || 'A1'}</TaxGroupID>\n`;
             xml += `\t\t<UpdateStockFlag>${r.UpdateStockFlag || 'true'}</UpdateStockFlag>\n`;
-            xml += `\t\t<BaseUOMCode>${r.BaseUOMCode}</BaseUOMCode>\n`;
+            xml += `\t\t<BaseUOMCode>${r.BaseUOMCode || ''}</BaseUOMCode>\n`;
             xml += `\t\t<MinimumShelfLifeDayCount>${r.MinimumShelfLifeDayCount || '0'}</MinimumShelfLifeDayCount>\n`;
             xml += `\t\t<ClassCode>${r.ClassCode || 'HAWA'}</ClassCode>\n`;
             xml += `\t\t<TaxExemptCode>${r.TaxExemptCode || '00'}</TaxExemptCode>\n`;
             xml += `\t\t<WarrantyPeriod>${r.WarrantyPeriod || '0'}</WarrantyPeriod>\n`;
             xml += `\t\t<LabelType>${r.LabelType || 'HAWA'}</LabelType>\n`;
             xml += `\t\t<ItemUsageTypeCode>${r.ItemUsageTypeCode || '00'}</ItemUsageTypeCode>\n`;
+            
+            // Optional Fields (But forced empty if null to match Haribo structure if needed)
             xml += `\t\t<GlobalLifeDayCount>${r.GlobalLifeDayCount || '0'}</GlobalLifeDayCount>\n`;
             xml += `\t\t<ShelfLifeDayCountPercent>${r.ShelfLifeDayCountPercent || '0'}</ShelfLifeDayCountPercent>\n`;
             xml += `\t\t<PhoneCardLoadingTypeCode>${r.PhoneCardLoadingTypeCode || '00'}</PhoneCardLoadingTypeCode>\n`;
@@ -200,74 +205,85 @@
             xml += `\t\t<CostItemFlag>${r.CostItemFlag || 'false'}</CostItemFlag>\n`;
             xml += `\t\t<MerchandisePlanningTypeCode>${r.MerchandisePlanningTypeCode || 'RP'}</MerchandisePlanningTypeCode>\n`;
             xml += `\t\t<MainSupplierID>${r.MainSupplierID || ''}</MainSupplierID>\n`;
+            
+            // Base UOM Package Info
             xml += `\t\t<BaseUOMConsumerPackageNetContent>${r.BaseUOMConsumerPackageNetContent || '1'}</BaseUOMConsumerPackageNetContent>\n`;
-            xml += `\t\t<BaseUOMConsumerPackageContentsUOMCode>${r.BaseUOMConsumerPackageContentsUOMCode || r.BaseUOMCode}</BaseUOMConsumerPackageContentsUOMCode>\n`;
+            xml += `\t\t<BaseUOMConsumerPackageContentsUOMCode>${r.BaseUOMConsumerPackageContentsUOMCode || r.BaseUOMCode || ''}</BaseUOMConsumerPackageContentsUOMCode>\n`;
             xml += `\t\t<BaseUOMConsumerPackageBasePriceContent>${r.BaseUOMConsumerPackageBasePriceContent || '1'}</BaseUOMConsumerPackageBasePriceContent>\n`;
-            xml += `\t\t<BaseUOMConsumerPackageBasePriceContentsUOMCode>${r.BaseUOMConsumerPackageBasePriceContentsUOMCode || r.BaseUOMCode}</BaseUOMConsumerPackageBasePriceContentsUOMCode>\n`;
+            xml += `\t\t<BaseUOMConsumerPackageBasePriceContentsUOMCode>${r.BaseUOMConsumerPackageBasePriceContentsUOMCode || r.BaseUOMCode || ''}</BaseUOMConsumerPackageBasePriceContentsUOMCode>\n`;
+            
+            // The fields you mentioned were missing:
             xml += `\t\t<DistributingWarehouseID>${r.DistributingWarehouseID || ''}</DistributingWarehouseID>\n`;
             xml += `\t\t<AssortmentID>${r.AssortmentID || ''}</AssortmentID>\n`;
             xml += `\t\t<ThirdPartyAssortmentID>${r.ThirdPartyAssortmentID || ''}</ThirdPartyAssortmentID>\n`;
             xml += `\t\t<TransportAssociationID>${r.TransportAssociationID || '0'}</TransportAssociationID>\n`;
-            xml += `\t\t<DefaultSellingUOMCode>${r.DefaultSellingUOMCode || r.BaseUOMCode}</DefaultSellingUOMCode>\n`;
+            xml += `\t\t<DefaultSellingUOMCode>${r.DefaultSellingUOMCode || r.BaseUOMCode || ''}</DefaultSellingUOMCode>\n`;
             
-            // ItemTextList
-            xml += `\t\t<ItemTextList>\n\t\t\t<ItemText><TextClass>KTXT</TextClass><Text>${r.BonText}</Text><TextNumber>1</TextNumber></ItemText>\n\t\t</ItemTextList>\n`;
+            // 2. ItemTextList (Generated)
+            xml += `\t\t<ItemTextList>\n`;
+            xml += `\t\t\t<ItemText><TextClass>KTXT</TextClass><Text>${escapeXml(r.BonText||'')}</Text><TextNumber>1</TextNumber></ItemText>\n`;
+            xml += `\t\t</ItemTextList>\n`;
             
-            // BulkItem
-            xml += `\t\t<BulkItem><TareID>${r.TareID || '0'}</TareID><AfterPackLeftLifeDayCount>0</AfterPackLeftLifeDayCount><ScalesFlag>false</ScalesFlag><LabellingMachineFlag>false</LabellingMachineFlag></BulkItem>\n`;
+            // 3. BulkItem
+            xml += `\t\t<BulkItem><TareID>0</TareID><AfterPackLeftLifeDayCount>0</AfterPackLeftLifeDayCount><ScalesFlag>false</ScalesFlag><LabellingMachineFlag>false</LabellingMachineFlag></BulkItem>\n`;
 
-            // UOMItemList (The complex part)
+            // 4. UOMItemList (Complex)
             xml += `\t\t<UOMItemList>\n\t\t\t<UOMItem>\n`;
-            xml += `\t\t\t\t<UOMCode>${r.BaseUOMCode}</UOMCode>\n`;
-            xml += `\t\t\t\t<ConversionNumerator>1</ConversionNumerator>\n`;
-            xml += `\t\t\t\t<ConversionDenominator>1</ConversionDenominator>\n`;
-            xml += `\t\t\t\t<ConsumerPackageNetWeight>1</ConsumerPackageNetWeight>\n`;
-            xml += `\t\t\t\t<ConsumerPackageWeightUOMCode>ST</ConsumerPackageWeightUOMCode>\n`;
-            xml += `\t\t\t\t<ConsumerPackageSizeUOMCode>${r.BaseUOMCode}</ConsumerPackageSizeUOMCode>\n`;
-            xml += `\t\t\t\t<ConsumerPackageBasePriceUOMCode>${r.BaseUOMCode}</ConsumerPackageBasePriceUOMCode>\n`;
+            xml += `\t\t\t\t<UOMCode>${r.UOMCode || r.BaseUOMCode || ''}</UOMCode>\n`;
+            xml += `\t\t\t\t<ConversionNumerator>${r.ConversionNumerator || '1'}</ConversionNumerator>\n`;
+            xml += `\t\t\t\t<ConversionDenominator>${r.ConversionDenominator || '1'}</ConversionDenominator>\n`;
+            xml += `\t\t\t\t<ConsumerPackageNetWeight>${r.ConsumerPackageNetWeight || '1'}</ConsumerPackageNetWeight>\n`;
+            xml += `\t\t\t\t<ConsumerPackageWeightUOMCode>${r.ConsumerPackageWeightUOMCode || 'ST'}</ConsumerPackageWeightUOMCode>\n`;
+            xml += `\t\t\t\t<ConsumerPackageSizeUOMCode>${r.ConsumerPackageSizeUOMCode || r.BaseUOMCode || ''}</ConsumerPackageSizeUOMCode>\n`;
+            xml += `\t\t\t\t<ConsumerPackageBasePriceUOMCode>${r.ConsumerPackageBasePriceUOMCode || r.BaseUOMCode || ''}</ConsumerPackageBasePriceUOMCode>\n`;
             xml += `\t\t\t\t<POSDepartmentID>${r.POSDepartmentID || ''}</POSDepartmentID>\n`;
-            xml += `\t\t\t\t<MainPOSItemID>${r.MainPOSItemID}</MainPOSItemID>\n`;
+            xml += `\t\t\t\t<MainPOSItemID>${r.MainPOSItemID || ''}</MainPOSItemID>\n`;
             xml += `\t\t\t\t<StatusCode>${r.StatusCode || 'F'}</StatusCode>\n`;
-            xml += `\t\t\t\t<MaximumStockQuantity>999</MaximumStockQuantity>\n`;
-            xml += `\t\t\t\t<MinimumStockQuantity>5</MinimumStockQuantity>\n`;
-            xml += `\t\t\t\t<ListingEffectiveDate>2008-01-06</ListingEffectiveDate>\n`;
-            xml += `\t\t\t\t<ListingExpirationDate>9999-12-31</ListingExpirationDate>\n`;
-            xml += `\t\t\t\t<MainMerchandiseHierarchyGroupID>${r.MerchandiseHierarchyGroupID}</MainMerchandiseHierarchyGroupID>\n`;
+            xml += `\t\t\t\t<MaximumStockQuantity>${r.MaximumStockQuantity || '999'}</MaximumStockQuantity>\n`;
+            xml += `\t\t\t\t<MinimumStockQuantity>${r.MinimumStockQuantity || '5'}</MinimumStockQuantity>\n`;
+            xml += `\t\t\t\t<ListingEffectiveDate>${r.ListingEffectiveDate || '2008-01-06'}</ListingEffectiveDate>\n`;
+            xml += `\t\t\t\t<ListingExpirationDate>${r.ListingExpirationDate || '9999-12-31'}</ListingExpirationDate>\n`;
+            xml += `\t\t\t\t<MainMerchandiseHierarchyGroupID>${r.MainMerchandiseHierarchyGroupID || r.MerchandiseHierarchyGroupID || ''}</MainMerchandiseHierarchyGroupID>\n`;
             
-            xml += `\t\t\t\t<ItemSellingRule><ProhibitReturnFlag>true</ProhibitReturnFlag><PriceEntryRequiredFlag>false</PriceEntryRequiredFlag><AllowFoodStampFlag>false</AllowFoodStampFlag><WICFlag>false</WICFlag><AuthorizedForSaleFlag>true</AuthorizedForSaleFlag><DiscountFlag>false</DiscountFlag><BonuspointsFlag>true</BonuspointsFlag><QuantityInputTypeCode>00</QuantityInputTypeCode><QuantityInputMethod>01</QuantityInputMethod><PriceChangeTypeCode>00</PriceChangeTypeCode><WeightEntryRequiredFlag>false</WeightEntryRequiredFlag></ItemSellingRule>\n`;
+            // Nested Rules
+            xml += `\t\t\t\t<ItemSellingRule><ProhibitReturnFlag>true</ProhibitReturnFlag><PriceEntryRequiredFlag>false</PriceEntryRequiredFlag><AllowFoodStampFlag>false</AllowFoodStampFlag><WICFlag>false</WICFlag><AuthorizedForSaleFlag>true</AuthorizedForSaleFlag><DiscountFlag>false</DiscountFlag><BonuspointsFlag>true</BonuspointsFlag><QuantityInputTypeCode>${r.QuantityInputTypeCode || '00'}</QuantityInputTypeCode><QuantityInputMethod>${r.QuantityInputMethod || '01'}</QuantityInputMethod><PriceChangeTypeCode>00</PriceChangeTypeCode><WeightEntryRequiredFlag>false</WeightEntryRequiredFlag></ItemSellingRule>\n`;
             
-            xml += `\t\t\t\t<PriceList><Price><Price>${r.Price}</Price><EffectiveDate>2009-01-01T00:00:00</EffectiveDate><ExpirationDate>2099-12-31T00:00:00</ExpirationDate><PriceTypeCode>01</PriceTypeCode></Price></PriceList>\n`;
+            xml += `\t\t\t\t<ItemMerchandiseManagementRule><PriceEntryRequiredFlag>false</PriceEntryRequiredFlag><QuantityInputTypeCode>00</QuantityInputTypeCode><WeightEntryRequiredFlag>false</WeightEntryRequiredFlag><DefaultLayoutClass>STST</DefaultLayoutClass><DefaultLabelCount>1</DefaultLabelCount></ItemMerchandiseManagementRule>\n`;
             
-            xml += `\t\t\t\t<EANList><EAN><PosItemID>${r.MainPOSItemID}</PosItemID><PosIdentityTypeCode>10</PosIdentityTypeCode></EAN></EANList>\n`;
+            xml += `\t\t\t\t<PriceList><Price><Price>${r.Price || '0'}</Price><EffectiveDate>${r.EffectiveDate || '2009-01-01T00:00:00'}</EffectiveDate><ExpirationDate>${r.ExpirationDate || '2099-12-31T00:00:00'}</ExpirationDate><PriceTypeCode>${r.PriceTypeCode || '01'}</PriceTypeCode></Price></PriceList>\n`;
+            
+            xml += `\t\t\t\t<EANList><EAN><PosItemID>${r.PosItemID || r.MainPOSItemID || ''}</PosItemID><PosIdentityTypeCode>${r.PosIdentityTypeCode || '10'}</PosIdentityTypeCode></EAN></EANList>\n`;
+            
+            // Empty Lists to match structure
+            xml += `\t\t\t\t<SalesRestrictionList/>\n`;
+            xml += `\t\t\t\t<ItemDepositCollectionList/>\n`;
+            xml += `\t\t\t\t<UOMItemTextList>\n\t\t\t\t\t<UOMItemText><TextNumber>1</TextNumber><TextClass>KTXT</TextClass><LanguageID>en_US</LanguageID><Text>${escapeXml(r.BonText||'')}</Text></UOMItemText>\n\t\t\t\t</UOMItemTextList>\n`;
             
             xml += `\t\t\t</UOMItem>\n\t\t</UOMItemList>\n`;
             
-            xml += `\t\t<MerchandiseHierarchyGroupAssignment>\n\t\t\t<MerchandiseHierarchyGroupID>${r.MerchandiseHierarchyGroupID}</MerchandiseHierarchyGroupID>\n\t\t\t<MerchandiseHierarchyGroupIDQualifier>MAIN</MerchandiseHierarchyGroupIDQualifier>\n\t\t</MerchandiseHierarchyGroupAssignment>\n`;
-            xml += `\t\t<RegularSalesUnitPrice>${r.Price}</RegularSalesUnitPrice>\n`;
+            // 5. Final Assignments
+            if (r.MerchandiseHierarchyGroupID) {
+                xml += `\t\t<MerchandiseHierarchyGroupAssignment>\n\t\t\t<MerchandiseHierarchyGroupID>${r.MerchandiseHierarchyGroupID}</MerchandiseHierarchyGroupID>\n\t\t\t<MerchandiseHierarchyGroupIDQualifier>MAIN</MerchandiseHierarchyGroupIDQualifier>\n\t\t</MerchandiseHierarchyGroupAssignment>\n`;
+            }
+            xml += `\t\t<RegularSalesUnitPrice>${r.Price || '0'}</RegularSalesUnitPrice>\n`;
             
             xml += `\t</Item>\n`;
         });
+        
         xml += `</ItemList>`;
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([xml], {type:'text/xml'})); a.download="Mirror_MasterData.xml"; a.click();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([xml], {type: 'text/xml'}));
+        a.download = "ItemMasterData_FinalMirror.xml";
+        a.click();
     }
 
-    function switchMainTab(id) {
-        document.querySelectorAll('.view-section, .tab').forEach(el => el.classList.remove('active'));
-        document.getElementById(`view-${id}`).classList.add('active');
-        event.target.classList.add('active');
-    }
-
-    // Splitter Logic
-    const divider = document.getElementById('div-m');
-    divider.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        const startY = e.clientY; const startH = document.getElementById('p-top').offsetHeight;
-        const mm = (ev) => document.getElementById('p-top').style.flex = `0 0 ${startH + (ev.clientY - startY)}px`;
-        const mu = () => { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
-        document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
-    });
-
-    renderGkHeader();
+    function escapeXml(s) { return s.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c])); }
+    function dragStart(e,k) { e.dataTransfer.setData("text", k); }
+    function allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+    function drop(e,col) { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); APP.currentMap[col] = e.dataTransfer.getData("text"); applyMapping(); }
+    function resetMapping() { APP.currentMap = {...DEFAULT_MAP}; applyMapping(); }
+    function switchMainTab(t) { document.querySelectorAll('.view-section,.tab').forEach(e=>e.classList.remove('active')); document.getElementById(`view-${t}`).classList.add('active'); event.target.classList.add('active'); }
+    document.getElementById('div-m').addEventListener('mousedown', (e) => { e.preventDefault(); const h=document.getElementById('p-top').offsetHeight; const mm=(ev)=>document.getElementById('p-top').style.flex=`0 0 ${h+(ev.clientY-e.clientY)}px`; const mu=()=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);}; document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu); });
 </script>
 </body>
 </html>
