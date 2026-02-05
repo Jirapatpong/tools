@@ -2,99 +2,97 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>GK Analyzer v16 - Excel Structure</title>
+    <title>GK Analyzer v17 - Excel Standard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #217346; --accent: #107c41; --sap: #e67e22; --bg: #f3f2f1; --border: #e1dfdd; }
+        :root { --primary: #107c41; --accent: #217346; --sap: #e67e22; --bg: #f3f2f1; --border: #e1dfdd; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--bg); overflow: hidden; }
         
-        /* Excel-like Header */
-        header { background: var(--primary); color: white; padding: 0 15px; height: 40px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-        .app-title { font-weight: bold; font-size: 14px; display:flex; align-items:center; gap:8px; }
-        .global-btn { background: white; border: none; padding: 4px 12px; color: var(--primary); border-radius: 2px; cursor: pointer; font-weight: 600; font-size: 11px; }
+        /* Excel Header Style */
+        header { background: var(--primary); color: white; padding: 0 15px; height: 42px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .app-title { font-weight: 600; font-size: 14px; display:flex; align-items:center; gap:8px; }
+        .global-btn { background: white; border: 1px solid white; padding: 4px 12px; color: var(--primary); border-radius: 2px; cursor: pointer; font-weight: 600; font-size: 11px; transition:0.2s; }
         .global-btn:hover { background: #f0f0f0; }
 
-        /* Layout */
-        #main-container { display: flex; flex: 1; flex-direction: column; height: calc(100vh - 40px); overflow: hidden; }
+        /* Main Layout */
+        #main-container { display: flex; flex: 1; flex-direction: column; height: calc(100vh - 42px); overflow: hidden; }
         .panel { flex: 1; display: flex; flex-direction: column; background: white; min-height: 0; overflow: hidden; }
         
         /* Toolbar */
-        .toolbar { padding: 5px 10px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 8px; align-items: center; }
-        .btn-tool { padding: 4px 10px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 11px; border-radius: 2px; }
+        .toolbar { padding: 6px 10px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px; align-items: center; height:30px; }
+        .label-xml { color: #107c41; font-weight: 700; font-size: 12px; width: 80px; }
+        .label-json { color: #e67e22; font-weight: 700; font-size: 12px; width: 80px; }
+        
+        .btn-tool { padding: 4px 10px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 11px; border-radius: 2px; display:flex; align-items:center; gap:5px; }
         .btn-tool:hover { background: #eee; border-color: #bbb; }
-        .active-tab { background: #e1f5fe; border-color: #039be5; color: #0277bd; font-weight: bold; }
+        
+        .status-text { font-size:10px; color:#666; margin-left:auto; }
 
-        /* Excel-like Table */
+        /* Table */
         .table-container { flex: 1; overflow: auto; position: relative; background: #fff; }
         table { border-collapse: collapse; table-layout: fixed; width: 0; font-size: 11px; color: #333; }
         
         th { 
-            background: #f3f2f1; border: 1px solid #d0d0d0; padding: 0; height: 28px;
-            text-align: left; position: sticky; top: 0; z-index: 10; user-select: none;
-            font-weight: 600; color: #444; min-width: 50px;
+            background: #f3f2f1; border-right: 1px solid #d0d0d0; border-bottom: 2px solid #c0c0c0;
+            padding: 0; margin: 0; height: 26px; text-align: left; position: sticky; top: 0; z-index: 10; 
+            font-weight: 600; color: #444; min-width: 0 !important; user-select: none;
         }
         
-        .th-content { padding: 5px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; box-sizing: border-box; }
-        
-        td { border: 1px solid #e1dfdd; padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: clip; height: 22px; }
-        tr:nth-child(even) { background-color: #fafafa; }
-        tr:hover { background-color: #e8f5e9; } /* Excel selection style hover */
+        .th-inner { padding: 0 6px; height:100%; display:flex; align-items:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; cursor: grab; }
+        .th-inner:active { cursor: grabbing; }
 
-        /* Resizer */
         .resizer { position: absolute; right: 0; top: 0; height: 100%; width: 5px; cursor: col-resize; z-index: 20; }
         .resizer:hover { background: #107c41; }
+
+        td { border-right: 1px solid #e1dfdd; border-bottom: 1px solid #e1dfdd; padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: clip; min-width: 0 !important; height: 22px; }
+        tr:nth-child(even) { background-color: #fafafa; }
+        tr:hover { background-color: #e8f5e9; }
+        th.drag-over { border-left: 3px solid #107c41 !important; }
 
         /* Splitter */
         .divider { height: 6px; background: #e1dfdd; cursor: row-resize; z-index: 50; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; }
         .divider:hover { background: #d0d0d0; }
-
-        .tag-sap { color: #e67e22; font-weight: bold; font-size: 10px; margin-right:4px; }
-        .tag-gk { color: #3498db; font-weight: bold; font-size: 10px; margin-right:4px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="app-title">📊 GK Analyzer v16 - Excel Structure</div>
-    <button class="global-btn" onclick="exportExcel()">⬇ Export to Excel</button>
+    <div class="app-title">📊 GK Analyzer v17 - Excel Standard</div>
+    <button class="global-btn" onclick="exportExcel()">⬇ Export Excel</button>
 </header>
 
 <div id="main-container">
-    
     <div class="panel" id="panel-top" style="flex: 1;">
         <div class="toolbar">
-            <b style="color:#2980b9; font-size:12px;">GK POS (XML)</b>
-            <button class="btn-tool" onclick="document.getElementById('xmlInput').click()">📂 Open XML...</button>
+            <span class="label-xml">GK POS (XML)</span>
+            <button class="btn-tool" onclick="document.getElementById('xmlInput').click()">📂 Load XML Folder</button>
             <input type="file" id="xmlInput" multiple webkitdirectory style="display:none">
-            <span id="xml-status" style="font-size:10px; color:#888; margin-left:auto;">0 rows</span>
+            <button class="btn-tool" onclick="APP.xml.data=[]; renderTable('xml');">❌ Clear</button>
+            <span id="xml-status" class="status-text">Ready</span>
         </div>
-        <div class="table-container">
-            <table id="xmlTable"><thead id="xmlHead"></thead><tbody id="xmlBody"></tbody></table>
-        </div>
+        <div class="table-container"><table id="xmlTable"><thead id="xmlHead"></thead><tbody id="xmlBody"></tbody></table></div>
     </div>
 
     <div class="divider" id="drag-divider"></div>
 
     <div class="panel" id="panel-bottom" style="flex: 1;">
         <div class="toolbar">
-            <b style="color:#e67e22; font-size:12px;">SAP (JSON)</b>
-            <button class="btn-tool" onclick="document.getElementById('jsonInput').click()">📂 Open JSON...</button>
+            <span class="label-json">SAP (JSON)</span>
+            <button class="btn-tool" onclick="document.getElementById('jsonInput').click()">📂 Load JSON File</button>
             <input type="file" id="jsonInput" multiple accept=".json" style="display:none">
-            <span id="json-status" style="font-size:10px; color:#888; margin-left:auto;">0 rows</span>
+            <button class="btn-tool" onclick="APP.json.data=[]; renderTable('json');">❌ Clear</button>
+            <span id="json-status" class="status-text">Ready</span>
         </div>
-        <div class="table-container">
-            <table id="jsonTable"><thead id="jsonHead"></thead><tbody id="jsonBody"></tbody></table>
-        </div>
+        <div class="table-container"><table id="jsonTable"><thead id="jsonHead"></thead><tbody id="jsonBody"></tbody></table></div>
     </div>
 </div>
 
 <script>
     const APP = {
-        xml: { data: [], columns: [] },
-        json: { data: [], columns: [] }
+        xml: { data: [], columns: [], sort: {key:null, asc:true} },
+        json: { data: [], columns: [], sort: {key:null, asc:true} }
     };
 
-    // --- LOADERS ---
     document.getElementById('xmlInput').addEventListener('change', (e) => loadFiles(e.target.files, 'xml'));
     document.getElementById('jsonInput').addEventListener('change', (e) => loadFiles(e.target.files, 'json'));
 
@@ -105,194 +103,197 @@
 
         for (let file of Array.from(files)) {
             const text = await file.text();
-            
+            let row = { "FileName": file.name };
+
             if (type === 'xml') {
                 if (!file.name.toLowerCase().endsWith('.xml')) continue;
                 const xml = new DOMParser().parseFromString(text, "text/xml");
-                let row = { "FileName": file.name };
-                flattenRecursive(xml.documentElement, row, "");
+                // Use Smart Flattening for XML to match Excel Headers
+                flattenXML_ExcelStyle(xml.documentElement, row);
                 APP[type].data.push(row);
-            } 
-            else {
+            } else {
                 if (!file.name.toLowerCase().endsWith('.json')) continue;
                 try {
                     const json = JSON.parse(text);
-                    // Handle SAP Structures
-                    let items = [];
-                    if (json.RetailIncentiveERPStoreOfferReplicationBulkRequest_V1) {
-                        items = json.RetailIncentiveERPStoreOfferReplicationBulkRequest_V1.RetailIncentiveERPStoreOfferReplicationRequestMessage_V1 || [];
-                    } else if (json.AssortmentSend_MT) {
-                        items = json.AssortmentSend_MT.AssortmentList || [];
-                    } else {
-                        items = [json]; // Fallback single object
-                    }
-
+                    let items = json.RetailIncentiveERPStoreOfferReplicationBulkRequest_V1?.RetailIncentiveERPStoreOfferReplicationRequestMessage_V1 || 
+                                json.AssortmentSend_MT?.AssortmentList || [json];
+                    
+                    if(!Array.isArray(items)) items = [items];
+                    
                     items.forEach(item => {
-                        let row = { "FileName": file.name };
-                        flattenRecursive(item, row, ""); // Full Flattening
-                        APP[type].data.push(row);
+                        let subRow = { "FileName": file.name };
+                        // Smart Flattening for SAP JSON to match flat CSV style
+                        flattenJSON_ExcelStyle(item, subRow, "");
+                        APP[type].data.push(subRow);
                     });
                 } catch(e) { console.error(e); }
             }
         }
 
-        // Collect all columns
-        APP[type].data.forEach(row => Object.keys(row).forEach(k => allKeys.add(k)));
+        // Collect Keys
+        APP[type].data.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
         
-        // Sort columns: Put ID, Description, Price first if found
+        // Priority Sorting for Columns
+        const priority = ["FileName", "PromotionID", "GK_Promo_ID", "SAP_Promo_ID", "RetailEventID", "MATNR", "BusinessUnitID", "Store_List", "Description", "PriceModificationAmount"];
         let sortedKeys = Array.from(allKeys).sort();
-        const priority = [
-            "FileName", 
-            "RetailIncentive.RetailEventID", "MATNR", // IDs
-            "RetailIncentive.Description.0.Description.0.$", "MATTEXT.0.MAKTX", // Desc
-            "RetailIncentive.Offer.Get.PriceAmount.$" // Price (Requested)
-        ];
-        
-        APP[type].columns = [
-            ...priority.filter(k => allKeys.has(k)),
-            ...sortedKeys.filter(k => !priority.includes(k))
-        ];
+        APP[type].columns = [...priority.filter(k => allKeys.has(k)), ...sortedKeys.filter(k => !priority.includes(k))];
 
         renderTable(type);
-        document.getElementById(`${type}-status`).textContent = `${APP[type].data.length} rows loaded`;
+        document.getElementById(`${type}-status`).textContent = `${APP[type].data.length} records`;
     }
 
-    // --- UNIVERSAL FLATTENER (The Magic) ---
-    function flattenRecursive(obj, res, prefix) {
-        // XML Handling
-        if (obj.nodeType) { 
-            if (obj.children.length === 0) {
-                let val = obj.textContent.trim();
-                if (val) res[prefix + obj.nodeName] = val;
-            } else {
-                Array.from(obj.children).forEach(child => {
-                    // Check if duplicate tag (Array-like in XML)
-                    let sameTags = Array.from(obj.children).filter(c => c.nodeName === child.nodeName);
-                    let key = prefix + child.nodeName;
-                    // If multiple tags of same name, we join them with comma (Compact view)
-                    if (sameTags.length > 1) {
-                        // For lists like BusinessUnitID, we aggregate values
-                        if(child.children.length === 0) {
-                             res[key] = res[key] ? res[key] + "," + child.textContent.trim() : child.textContent.trim();
-                        } else {
-                             // Complex object lists -> we might skip deep expansion for cleanliness or recurse with index
-                             // Let's recurse but use index to unique-fy if needed, OR simplify
-                             // For this requirement (Excel structure), lists are usually flattened with Index or joined.
-                             // Let's use simple recursion for now.
-                             flattenRecursive(child, res, key + ".");
-                        }
-                    } else {
-                        flattenRecursive(child, res, key + ".");
+    // --- XML EXCEL-STYLE FLATTENER ---
+    function flattenXML_ExcelStyle(node, res, prefix = "") {
+        if (node.children.length === 0) {
+            let val = node.textContent.trim();
+            if (val) {
+                // Logic: ถ้า Tag ชื่อซ้ำกับที่มีอยู่แล้ว ให้ใช้ _ เชื่อมกับแม่
+                let key = node.nodeName;
+                
+                // Exception List: Tag พวกนี้ให้ใช้ชื่อตัวเองโดดๆ ได้เลยตาม Excel
+                const simpleKeys = ["PromotionID", "Description", "BusinessUnitID", "EffectiveDateTime", "ExpirationDateTime", "PriceModificationAmount", "PriceModificationPercent", "NewPriceAmount"];
+                
+                if (!simpleKeys.includes(key)) {
+                    // ถ้าไม่ใช่ Key สามัญ ให้ลองเช็คว่าควรเติม Prefix ไหม
+                    // เช่น TypeCode ของ Rule ควรเป็น PromotionConditionRule_TypeCode
+                    if (prefix.includes("Rule") || prefix.includes("Eligibility")) {
+                        // ดึงชื่อ Parent ตัวสุดท้ายมาแปะ
+                        let parent = prefix.split('_').filter(p=>p).pop(); 
+                        if(parent) key = parent + "_" + key;
                     }
-                });
-            }
-            return;
-        }
-
-        // JSON Handling
-        for (let key in obj) {
-            let val = obj[key];
-            let newKey = prefix + key;
-            
-            if (val === null) continue;
-
-            if (Array.isArray(val)) {
-                // If array of objects, extract sub-fields and join with |
-                if (val.length > 0 && typeof val[0] === 'object') {
-                    // Smart Aggregation for Arrays (e.g. Products)
-                    // We extract all keys from objects in array and join values
-                    let subKeys = new Set();
-                    val.forEach(v => Object.keys(v).forEach(k => subKeys.add(k)));
-                    
-                    subKeys.forEach(sk => {
-                        let values = val.map(v => {
-                            if(typeof v[sk] === 'object') return JSON.stringify(v[sk]); // Fallback for deep nest
-                            return v[sk];
-                        }).filter(v => v).join(" | ");
-                        if(values) res[newKey + "." + sk] = values;
-                    });
-                } else {
-                    res[newKey] = val.join(", ");
                 }
-            } 
-            else if (typeof val === 'object') {
-                if(key === "@languageCode") continue; // Skip attributes if unwanted
-                if(key === "$") { res[prefix.slice(0,-1)] = val; } // Handle SAP value key "$"
-                else flattenRecursive(val, res, newKey + ".");
-            } 
-            else {
-                res[newKey] = val;
+                
+                // Handle Duplicates (Comma Separate)
+                res[key] = res[key] ? res[key] + "," + val : val;
+            }
+        } else {
+            Array.from(node.children).forEach(child => {
+                // สร้าง Prefix แบบสะสม แต่ตัดบางตัวที่ไม่จำเป็นออก
+                let newPrefix = prefix;
+                if(["PromotionConditionRule", "PromotionConditionEligibility", "RebatePromotionConditionRule"].includes(child.nodeName)) {
+                     newPrefix += child.nodeName + "_";
+                }
+                flattenXML_ExcelStyle(child, res, newPrefix);
+            });
+        }
+    }
+
+    // --- JSON EXCEL-STYLE FLATTENER ---
+    function flattenJSON_ExcelStyle(obj, res, prefix) {
+        for (let k in obj) {
+            let v = obj[k];
+            // Simplify Key: Remove long SAP prefixes
+            let cleanKey = k.replace("RetailIncentive", "").replace("Offer", "").replace("SalesArea", "");
+            if(cleanKey.startsWith(".")) cleanKey = cleanKey.substring(1);
+            if(!cleanKey) cleanKey = k; // fallback
+            
+            // Combine with prefix if needed
+            let finalKey = prefix ? prefix + "." + cleanKey : cleanKey;
+            
+            // Specific overrides for ID columns to match overview
+            if(k === "RetailEventID") finalKey = "SAP_Promo_ID";
+            if(k === "MATNR") finalKey = "Article_ID";
+            if(k === "$") finalKey = prefix; // Value of the object itself
+
+            if (Array.isArray(v)) {
+                 // Join Arrays with Pipe |
+                 let vals = v.map(i => (typeof i === 'object') ? JSON.stringify(i) : i).join('|');
+                 if(vals) res[finalKey] = vals;
+                 // Also try to flatten inside array if objects (like Description array)
+                 if(v.length>0 && typeof v[0] === 'object') {
+                     v.forEach(sub => flattenJSON_ExcelStyle(sub, res, finalKey));
+                 }
+            } else if (typeof v === 'object' && v !== null) {
+                flattenJSON_ExcelStyle(v, res, finalKey);
+            } else {
+                res[finalKey] = v;
             }
         }
     }
 
-    // --- RENDERER ---
+    // --- RENDER ---
     function renderTable(type) {
         const thead = document.getElementById(`${type}Head`);
         const tbody = document.getElementById(`${type}Body`);
         const cols = APP[type].columns;
-        
+
+        // Header with Resize & Drag
         thead.innerHTML = `<tr>${cols.map(k => `
-            <th style="width:120px;">
-                <div class="th-content" title="${k}">${formatHeader(k)}</div>
+            <th style="width:100px;" draggable="true" data-key="${k}" data-type="${type}">
+                <div class="th-inner" onclick="doSort('${type}','${k}')">
+                    ${k} ${APP[type].sort.key===k ? (APP[type].sort.asc?'▲':'▼') : ''}
+                </div>
                 <div class="resizer" onmousedown="initResize(event)"></div>
             </th>`).join('')}</tr>`;
-
-        tbody.innerHTML = APP[type].data.map(row => `
-            <tr>${cols.map(k => `
-                <td title="${row[k] || ''}">${row[k] || ''}</td>
-            `).join('')}</tr>
-        `).join('');
+            
+        // Body
+        tbody.innerHTML = APP[type].data.map(r => `<tr>${cols.map(k => `<td title="${r[k]||''}">${r[k]||''}</td>`).join('')}</tr>`).join('');
+        
+        attachHeaderEvents(type);
     }
 
-    function formatHeader(key) {
-        // Shorten long SAP paths for readability
-        return key.replace('RetailIncentive.', '')
-                  .replace('ERPStoreOfferReplicationRequestMessage_V1.', '')
-                  .replace('AssortmentList.', '');
-    }
-
-    // --- RESIZE LOGIC ---
+    // --- EVENTS (Sort, Resize, Drag) ---
     function initResize(e) {
-        e.preventDefault();
+        e.preventDefault(); e.stopPropagation();
         const th = e.target.parentElement;
-        const startX = e.clientX;
-        const startW = th.offsetWidth;
-        
-        function onMove(me) { th.style.width = Math.max(50, startW + (me.clientX - startX)) + "px"; }
-        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
-        
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
+        const startX = e.pageX; const startW = th.offsetWidth;
+        const mm = (ev) => th.style.width = Math.max(0, startW + (ev.pageX - startX)) + "px";
+        const mu = () => { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
+        document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
     }
 
-    // --- DIVIDER LOGIC ---
+    function doSort(type, key) {
+        let s = APP[type].sort;
+        s.asc = s.key===key ? !s.asc : true; s.key=key;
+        APP[type].data.sort((a,b) => (a[key]||"").toString().localeCompare((b[key]||"").toString()) * (s.asc?1:-1));
+        renderTable(type);
+    }
+
+    function attachHeaderEvents(type) {
+        let dragSrc = null;
+        document.querySelectorAll(`#${type}Head th`).forEach(th => {
+            th.addEventListener('dragstart', (e) => { dragSrc = th.dataset.key; e.dataTransfer.effectAllowed='move'; });
+            th.addEventListener('dragover', (e) => { e.preventDefault(); th.classList.add('drag-over'); });
+            th.addEventListener('dragleave', () => th.classList.remove('drag-over'));
+            th.addEventListener('drop', (e) => {
+                e.preventDefault(); th.classList.remove('drag-over');
+                if(dragSrc !== th.dataset.key) {
+                    const arr = APP[type].columns;
+                    const f = arr.indexOf(dragSrc), t = arr.indexOf(th.dataset.key);
+                    arr.splice(t, 0, arr.splice(f, 1)[0]);
+                    renderTable(type);
+                }
+            });
+            th.querySelector('.resizer').addEventListener('dblclick', (e) => {
+                // Auto fit
+                let k = th.dataset.key;
+                let max = k.length;
+                APP[type].data.forEach(r => { let l = (r[k]||"").toString().length; if(l>max) max=l; });
+                th.style.width = (max*7 + 20) + "px";
+            });
+        });
+    }
+
+    // Divider
     const divider = document.getElementById('drag-divider');
     divider.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        const container = document.getElementById('main-container');
         const startY = e.clientY;
         const startH = document.getElementById('panel-top').offsetHeight;
-        
-        function onMove(me) {
-            let newH = startH + (me.clientY - startY);
-            if (newH > 50 && newH < container.offsetHeight - 50) {
-                document.getElementById('panel-top').style.height = newH + "px";
-                document.getElementById('panel-top').style.flex = "none";
-            }
-        }
-        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
+        const mm = (ev) => {
+            let newH = startH + (ev.clientY - startY);
+            if(newH > 50 && newH < document.body.offsetHeight-50) document.getElementById('panel-top').style.flex = `0 0 ${newH}px`;
+        };
+        const mu = () => { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
+        document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
     });
 
     function exportExcel() {
         const wb = XLSX.utils.book_new();
         if(APP.xml.data.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_book(document.getElementById('xmlTable')), "GK_XML");
         if(APP.json.data.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_book(document.getElementById('jsonTable')), "SAP_JSON");
-        XLSX.writeFile(wb, "GK_SAP_Flat_Export.xlsx");
+        XLSX.writeFile(wb, "GK_Analysis_v17.xlsx");
     }
 </script>
-
 </body>
 </html>
