@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งปัญหาเทคนิค - Helpdesk Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">📦 เปิด Ticket แจ้งปัญหา</h2>
+        
+        <form id="incidentForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">สาขาที่แจ้ง (Caller)</label>
+                <select id="caller" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    <option value="">-- เลือกสาขา --</option>
+                    <option>MALL-0006 The Mall Ngamwongwan</option>
+                    <option>MALL-0007 The Mall Bangkae</option>
+                    <option>MALL-0009 Emporium</option>
+                    <option>MALL-0011 Siam Paragon</option>
+                    <option>MALL-0012 EmQuartier</option>
+                    <option>MALL-0015 Emsphere</option>
+                    <option>MALL-S001 Terminal 21</option>
+                    <option>MALL-0000 The Mall Group (HeadOffice)</option>
+                    <option>MALL-0002 The Mall Ramkhamhaeng</option>
+                    <option>MALL-0005 The Mall Tha phra</option>
+                    <option>MALL-0008 The Mall Bangkapi</option>
+                    <option>MALL-0010 The Mall Korat</option>
+                    <option>MALL-S002 Promenade</option>
+                    <option>MALL-S003 AOT</option>
+                    <option>MALL-S004 CDC Ratchapruek</option>
+                    <option>MALL-S005 MRT Lat Prao</option>
+                    <option>MALL-S010 Design Village Phuthamonton</option>
+                    <option>MALL-S014 Design Village Bangna</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">ประเภทอุปกรณ์ (Category)</label>
+                <select id="category" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    <option value="Hardware">Hardware</option>
+                    <option value="Software">Software</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">หัวข้อปัญหา (Short Description)</label>
+                <input type="text" id="short_description" placeholder="เช่น พิมพ์ใบเสร็จไม่ออก" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">รายละเอียด (Description)</label>
+                <textarea id="description" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">ชื่อ-เบอร์โทรผู้แจ้ง (Contact Info)</label>
+                <input type="text" id="contact" placeholder="ชื่อ คุณ... โทร 08x-xxxxxxx" class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-md hover:bg-blue-700 transition duration-300">
+                ส่งข้อมูล (Submit Ticket)
+            </button>
+        </form>
+    </div>
+
+    <script type="module">
+        // ขั้นตอนนี้จะสมบูรณ์เมื่อเราตั้งค่า Firebase เสร็จ
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- รอใส่ Firebase Config ตรงนี้ ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // จัดการการส่ง Form
+        document.getElementById('incidentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const ticketData = {
+                caller: document.getElementById('caller').value,
+                category: document.getElementById('category').value,
+                short_description: document.getElementById('short_description').value,
+                description: document.getElementById('description').value,
+                contact_info: document.getElementById('contact').value,
+                timestamp: new Date()
+            };
+
+            try {
+                await addDoc(collection(db, "incidents"), ticketData);
+                alert("ส่งข้อมูลสำเร็จ! ข้อมูลถูกบันทึกเข้าระบบแล้ว");
+                document.getElementById('incidentForm').reset();
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
+            }
+        });
+    </script>
+</body>
+</html>
