@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTH Support Portal - v4.0 Speed</title>
+    <title>FTH Support Portal - v4.1 Ultra Compression</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -18,42 +18,42 @@
 <body class="bg-gray-50 min-h-screen">
 
     <nav id="main-nav" class="bg-white shadow-sm sticky top-0 z-50 hidden">
-        <div class="max-w-7xl mx-auto flex px-4 italic">
-            <button onclick="showMenu()" class="px-4 py-4 text-blue-600 font-bold hover:bg-gray-50"><i class="fas fa-chevron-left mr-2"></i> กลับหน้าหลัก</button>
+        <div class="max-w-7xl mx-auto flex px-4">
+            <button onclick="showMenu()" class="px-4 py-4 text-blue-600 font-bold hover:bg-gray-50 italic"><i class="fas fa-chevron-left mr-2"></i> กลับหน้าหลัก</button>
         </div>
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 py-8">
         <div id="main-menu" class="max-w-2xl mx-auto py-12 text-center">
-            <div class="mb-10 text-center">
+            <div class="mb-10">
                 <div class="bg-blue-600 w-20 h-20 rounded-3xl text-white flex items-center justify-center mx-auto mb-6 shadow-2xl text-3xl font-black italic">FTH</div>
                 <h1 class="text-4xl font-black text-gray-800 tracking-tight">Support Portal</h1>
-                <p class="text-gray-400 mt-3">ระบบแจ้งปัญหาและติดตามสถานะงาน (Speed Edition)</p>
+                <p class="text-gray-400 mt-3 italic text-sm">แจ้งปัญหาเทคนิค (บีบอัดรูปความเร็วสูง v4.1)</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <button onclick="switchPage('user-form')" class="bg-white p-10 rounded-3xl shadow-xl border-4 border-transparent hover:border-blue-500 transition-all group">
                     <i class="fas fa-edit text-5xl text-blue-600 mb-5 group-hover:scale-110 transition"></i>
-                    <h3 class="text-2xl font-bold text-gray-800 text-center">แจ้งปัญหาใหม่</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">แจ้งปัญหาใหม่</h3>
                 </button>
                 <button onclick="switchPage('track-status')" class="bg-white p-10 rounded-3xl shadow-xl border-4 border-transparent hover:border-orange-500 transition-all group">
                     <i class="fas fa-search-location text-5xl text-orange-500 mb-5 group-hover:scale-110 transition"></i>
-                    <h3 class="text-2xl font-bold text-gray-800 text-center">ติดตามสถานะ</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">ติดตามสถานะ</h3>
                 </button>
             </div>
-            <button onclick="switchPage('admin-dashboard')" class="mt-16 text-gray-300 hover:text-gray-500 text-xs underline transition italic">Admin Console</button>
+            <button onclick="switchPage('admin-dashboard')" class="mt-16 text-gray-300 hover:text-gray-500 text-xs underline transition italic">Admin Control Panel</button>
         </div>
 
         <div id="user-form" class="hidden">
             <div id="form-container" class="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl mx-auto border border-gray-100">
                 <h2 class="text-2xl font-bold text-gray-800 mb-8 border-b pb-5 flex items-center gap-3">
-                    <i class="fas fa-file-signature text-blue-600"></i> แจ้งปัญหาใหม่
+                    <i class="fas fa-file-signature text-blue-600"></i> รายละเอียดแจ้งซ่อม
                 </h2>
                 <form id="incidentForm" class="space-y-5">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="col-span-1 md:col-span-2">
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">สาขา (Caller) *</label>
-                            <select id="caller" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
-                                <option value="">-- เลือกสาขา --</option>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">สาขา (Caller) *</label>
+                            <select id="caller" class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500" required>
+                                <option value="">-- กรุณาเลือกสาขา --</option>
                                 <option>MALL-0006 The Mall Ngamwongwan</option>
                                 <option>MALL-0007 The Mall Bangkae</option>
                                 <option>MALL-0009 Emporium</option>
@@ -75,84 +75,86 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">ชื่อ-เบอร์โทร *</label>
-                            <input type="text" id="contact" placeholder="ชื่อ และ เบอร์ติดต่อ" class="w-full p-3 border rounded-xl outline-none" required>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">ชื่อและเบอร์โทรติดต่อ *</label>
+                            <input type="text" id="contact" placeholder="คุณ... โทร 08x-xxx" class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">หมวดหมู่</label>
-                            <select id="category" class="w-full p-3 border rounded-xl outline-none"><option>Hardware</option><option>Software</option></select>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">หมวดหมู่</label>
+                            <select id="category" class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500"><option>Hardware</option><option>Software</option></select>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">หัวข้อปัญหา *</label>
-                        <input type="text" id="short_description" placeholder="อาการเบื้องต้น" class="w-full p-3 border rounded-xl outline-none" required>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">หัวข้อปัญหา *</label>
+                        <input type="text" id="short_description" placeholder="ระบุอาการสั้นๆ" class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">รายละเอียดปัญหา</label>
-                        <textarea id="description" rows="3" class="w-full p-3 border rounded-xl outline-none"></textarea>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">รายละเอียดปัญหา</label>
+                        <textarea id="description" rows="3" class="w-full p-3 border-2 border-gray-50 rounded-xl outline-none focus:border-blue-500"></textarea>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1 text-blue-600 italic">บีบอัดรูปภาพอัตโนมัติ (สูงสุด 3 รูป)</label>
-                        <input type="file" id="imageInput" accept="image/*" multiple class="text-xs">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <label class="block text-xs font-bold text-blue-600 mb-2 uppercase italic"><i class="fas fa-compress-arrows-alt"></i> บีบอัดรูปภาพอัตโนมัติ (ไม่เกิน 0.8MB ต่อรูป)</label>
+                        <input type="file" id="imageInput" accept="image/*" multiple class="text-xs text-gray-400">
                     </div>
-                    <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 shadow-lg transition flex justify-center items-center gap-2">
-                        <i class="fas fa-paper-plane"></i> ยืนยันข้อมูล
+                    <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 shadow-xl transition-all flex justify-center items-center gap-2 text-lg">
+                        <i class="fas fa-paper-plane"></i> ยืนยันข้อมูลแจ้งซ่อม
                     </button>
                 </form>
             </div>
-            <div id="success-container" class="hidden bg-white p-12 rounded-2xl shadow-lg max-md mx-auto text-center border">
-                <div class="text-green-500 text-6xl mb-4"><i class="fas fa-check-circle"></i></div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2 font-mono" id="display-ticket-id"></h2>
-                <button onclick="showMenu()" class="w-full py-3 bg-gray-100 rounded-xl font-bold text-gray-600 mt-4">กลับสู่เมนูหลัก</button>
+            <div id="success-container" class="hidden bg-white p-12 rounded-3xl shadow-2xl max-w-md mx-auto text-center border">
+                <div class="text-green-500 text-7xl mb-6 animate-bounce"><i class="fas fa-check-circle"></i></div>
+                <h2 class="text-3xl font-black text-blue-700 font-mono tracking-widest mb-6" id="display-ticket-id"></h2>
+                <button onclick="showMenu()" class="w-full py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200">กลับสู่เมนูหลัก</button>
             </div>
         </div>
 
         <div id="track-status" class="hidden max-w-lg mx-auto">
-            <div class="bg-white p-8 rounded-2xl shadow-lg border text-center">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">🔍 ติดตามสถานะ</h2>
-                <input type="text" id="search-id" placeholder="INCxxxxxxxx" class="w-full p-4 border rounded-xl outline-none text-center font-bold text-xl uppercase tracking-widest mb-4">
-                <button onclick="trackTicket()" id="btnTrack" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg">ค้นหา</button>
-                <div id="track-result" class="mt-6 hidden border-t pt-4 text-left space-y-3">
-                    <div class="flex justify-between"><span>สถานะ:</span><span id="res-status" class="font-bold"></span></div>
-                    <div class="flex justify-between"><span>หัวข้อ:</span><span id="res-desc" class="font-bold text-blue-600"></span></div>
+            <div class="bg-white p-10 rounded-3xl shadow-2xl border text-center">
+                <h2 class="text-2xl font-bold text-gray-800 mb-8"><i class="fas fa-search-location text-orange-500 mr-2"></i> ติดตามสถานะ</h2>
+                <input type="text" id="search-id" placeholder="INCxxxxxxxx" class="w-full p-5 border-2 border-gray-50 rounded-2xl outline-none text-center font-black text-2xl uppercase tracking-widest mb-6">
+                <button onclick="trackTicket()" id="btnTrack" class="w-full bg-orange-500 text-white font-black py-5 rounded-2xl shadow-lg hover:bg-orange-600">ตรวจสอบ</button>
+                <div id="track-result" class="mt-8 hidden border-t-2 pt-6 text-left space-y-4">
+                    <div class="flex justify-between"><span>Status:</span><span id="res-status" class="font-black px-4 py-1 rounded-full text-sm"></span></div>
+                    <div class="flex justify-between"><span>Subject:</span><span id="res-desc" class="font-bold text-gray-700"></span></div>
                 </div>
             </div>
         </div>
 
-        <div id="admin-dashboard" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">Control Panel</h3>
-                <button onclick="exportToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md">Export Excel</button>
+        <div id="admin-dashboard" class="hidden animate-fade-in">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-3xl font-black text-gray-800 tracking-tight">Management Console</h3>
+                <button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-700 transition shadow-lg text-xs">EXPORT EXCEL</button>
             </div>
-            <div class="bg-white rounded-xl shadow-lg overflow-x-auto border">
-                <table class="min-w-full text-left">
-                    <thead class="bg-gray-800 text-white text-xs uppercase font-bold">
-                        <tr>
-                            <th class="px-4 py-4 text-center">Ticket No.</th>
-                            <th class="px-4 py-4">Opened</th>
-                            <th class="px-4 py-4">Caller</th>
-                            <th class="px-4 py-4 text-center">Status</th>
-                            <th class="px-4 py-4 text-center">Flag</th>
-                            <th class="px-4 py-4 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-list" class="text-sm divide-y divide-gray-100"></tbody>
-                </table>
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left">
+                        <thead class="bg-gray-800 text-white text-[10px] uppercase font-bold tracking-[0.2em]">
+                            <tr>
+                                <th class="px-6 py-5 text-center">Ticket No.</th>
+                                <th class="px-6 py-5">Opened</th>
+                                <th class="px-6 py-5">Caller</th>
+                                <th class="px-6 py-5 text-center">Status</th>
+                                <th class="px-6 py-5 text-center">Flag</th>
+                                <th class="px-6 py-5 text-center">View</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-list" class="text-sm divide-y divide-gray-50"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="detail-modal" class="fixed inset-0 bg-black/50 hidden z-[60] items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 id="modal-id" class="text-xl font-black text-blue-600 font-mono"></h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    <div id="detail-modal" class="fixed inset-0 bg-black/60 hidden z-[100] items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-[2.5rem] max-w-2xl w-full p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 id="modal-id" class="text-2xl font-black text-blue-600 font-mono tracking-tighter"></h3>
+                <button onclick="closeModal()" class="text-gray-300 hover:text-gray-900"><i class="fas fa-times-circle text-2xl"></i></button>
             </div>
-            <div class="space-y-4 text-sm">
-                <div class="bg-gray-50 p-4 rounded-xl border italic whitespace-pre-wrap" id="modal-desc"></div>
-                <div id="modal-images" class="flex gap-2 overflow-x-auto pb-2"></div>
+            <div class="space-y-6 text-sm">
+                <p class="bg-blue-50/50 p-5 rounded-2xl border-2 border-blue-50 italic text-gray-700 whitespace-pre-wrap leading-relaxed" id="modal-desc"></p>
+                <div><span class="text-gray-400 font-black uppercase text-[10px] block mb-3">Attachments:</span><div id="modal-images" class="flex gap-3 overflow-x-auto pb-4"></div></div>
             </div>
-            <button onclick="closeModal()" class="w-full mt-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-500">ปิด</button>
+            <button onclick="closeModal()" class="w-full mt-8 py-5 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black shadow-xl">ปิดหน้าต่าง</button>
         </div>
     </div>
 
@@ -182,7 +184,7 @@
         };
         window.showMenu = () => switchPage('main-menu');
 
-        // Logic: Submit with Optimization
+        // Logic: Submit with ULTRA Compression
         document.getElementById('incidentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
@@ -190,24 +192,24 @@
             const files = fileInput.files;
             
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> บีบอัดและอัปโหลดรูป...';
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> กำลังประมวลผลรูป...';
 
             try {
                 const now = new Date();
                 const YYMMDD = `${now.getFullYear().toString().slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-                
-                // Fast Generation of ID
                 const qC = query(collection(db, "incidents"), where("date_only", "==", YYMMDD));
                 const snapC = await getCountFromServer(qC);
                 const tID = `INC${YYMMDD}${String(snapC.data().count + 1).padStart(3, '0')}`;
 
-                // Parallel Compression & Parallel Uploading
+                // Parallel Ultra Compression Settings
                 const uploadPromises = Array.from(files).map(async (file) => {
-                    // 1. บีบอัดรูปก่อน (Max 1MB, Max Width 1024px)
-                    const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1024, useWebWorker: true };
+                    const options = { 
+                        maxSizeMB: 0.8, // คุมขนาดไม่ให้เกิน 0.8MB
+                        maxWidthOrHeight: 1280, // ลด Resolution ลงเหลือ 1280px
+                        initialQuality: 0.7, // ลดคุณภาพจุดเริ่มต้นเพื่อลดขนาด
+                        useWebWorker: true 
+                    };
                     const compressedFile = await imageCompression(file, options);
-                    
-                    // 2. อัปโหลดพร้อมกัน
                     const sRef = ref(storage, `pics/${tID}/${file.name}`);
                     await uploadBytes(sRef, compressedFile);
                     return getDownloadURL(sRef);
@@ -215,7 +217,6 @@
 
                 const imageUrls = await Promise.all(uploadPromises);
 
-                // บันทึกลง Database
                 await addDoc(collection(db, "incidents"), {
                     ticket_id: tID, date_only: YYMMDD, caller: document.getElementById('caller').value,
                     contact_info: document.getElementById('contact').value, short_description: document.getElementById('short_description').value,
@@ -228,19 +229,21 @@
             } catch (err) { alert("Error: " + err.message); btn.disabled = false; btn.innerText = "ยืนยันข้อมูล"; }
         });
 
-        // Tracking & Admin (Same as v3.3)
+        // Track & Admin (Logic as before)
         window.trackTicket = async () => {
             const tid = document.getElementById('search-id').value.trim().toUpperCase();
+            if(!tid) return;
             const q = query(collection(db, "incidents"), where("ticket_id", "==", tid));
             const snap = await getDocs(q);
             document.getElementById('track-result').classList.remove('hidden');
-            if(snap.empty) { document.getElementById('track-not-found').classList.remove('hidden'); }
+            if(snap.empty) { document.getElementById('track-not-found').classList.remove('hidden'); document.getElementById('track-found').classList.add('hidden'); }
             else {
                 const d = snap.docs[0].data();
-                document.getElementById('res-status').innerText = d.status.toUpperCase();
-                document.getElementById('res-status').className = d.status==='completed'?'text-green-500 font-bold':'text-amber-500 font-bold';
+                const s = document.getElementById('res-status');
+                s.innerText = d.status.toUpperCase();
+                s.className = `font-black px-4 py-1 rounded-full text-sm ${d.status==='completed'?'bg-green-100 text-green-700':'bg-amber-100 text-amber-700'}`;
                 document.getElementById('res-desc').innerText = d.short_description;
-                document.getElementById('track-found').classList.remove('hidden');
+                document.getElementById('track-found').classList.remove('hidden'); document.getElementById('track-not-found').classList.add('hidden');
             }
         };
 
@@ -250,7 +253,7 @@
             const t = adminTickets.find(x => x.doc_id === docId);
             document.getElementById('modal-id').innerText = t.ticket_id;
             document.getElementById('modal-desc').innerText = t.description || "ไม่มีรายละเอียด";
-            document.getElementById('modal-images').innerHTML = t.images?.map(u => `<a href="${u}" target="_blank"><img src="${u}" class="h-20 w-20 object-cover rounded border"></a>`).join('') || "ไม่มีรูป";
+            document.getElementById('modal-images').innerHTML = t.images?.map(u => `<a href="${u}" target="_blank"><img src="${u}" class="h-24 w-24 object-cover rounded-2xl border-4 border-gray-50 shadow-sm"></a>`).join('') || "-";
             document.getElementById('detail-modal').classList.add('modal-active');
         };
         window.closeModal = () => document.getElementById('detail-modal').classList.remove('modal-active');
@@ -258,25 +261,25 @@
         onSnapshot(query(collection(db, "incidents"), orderBy("timestamp", "desc")), (snap) => {
             adminTickets = snap.docs.map(d => ({ ...d.data(), doc_id: d.id }));
             document.getElementById('admin-list').innerHTML = adminTickets.map(t => `
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-4 py-4 font-bold text-blue-600 text-center font-mono text-sm">${t.ticket_id}</td>
-                    <td class="px-4 py-4 text-[10px] text-gray-400 font-mono">${t.timestamp.toDate().toLocaleString('th-TH')}</td>
-                    <td class="px-4 py-4 font-bold text-gray-700">${t.caller}</td>
-                    <td class="px-4 py-4 text-center">
-                        <select onchange="updateStatus('${t.doc_id}', this.value)" class="text-[10px] border rounded font-black uppercase">
+                <tr class="hover:bg-blue-50/50 transition duration-300">
+                    <td class="px-6 py-5 font-black text-blue-600 text-center font-mono tracking-tighter text-sm">${t.ticket_id}</td>
+                    <td class="px-6 py-5 text-[10px] text-gray-400 font-mono italic text-center">${t.timestamp.toDate().toLocaleString('th-TH')}</td>
+                    <td class="px-6 py-5 font-bold text-gray-700">${t.caller}</td>
+                    <td class="px-6 py-5 text-center">
+                        <select onchange="updateStatus('${t.doc_id}', this.value)" class="text-[10px] border-2 border-gray-100 rounded-lg font-black uppercase outline-none px-2 py-1">
                             <option value="on process" ${t.status==='on process'?'selected':''}>On Process</option>
                             <option value="completed" ${t.status==='completed'?'selected':''}>Completed</option>
                         </select>
                     </td>
-                    <td class="px-4 py-4 text-center"><i class="fas ${t.is_pulled ? 'fa-check-circle text-green-500':'fa-clock text-amber-500'}"></i></td>
-                    <td class="px-4 py-4 text-center"><button onclick="openDetail('${t.doc_id}')" class="text-blue-500"><i class="fas fa-eye text-xl"></i></button></td>
+                    <td class="px-6 py-5 text-center"><i class="fas ${t.is_pulled ? 'fa-check-circle text-green-500':'fa-clock text-amber-500'} text-lg"></i></td>
+                    <td class="px-6 py-5 text-center"><button onclick="openDetail('${t.doc_id}')" class="bg-gray-900 text-white w-8 h-8 rounded-lg hover:scale-110 transition shadow-lg"><i class="fas fa-eye text-xs"></i></button></td>
                 </tr>`).join('');
         });
 
         window.exportToExcel = () => {
-            const ws = XLSX.utils.json_to_sheet(adminTickets.map(t => ({ ID: t.ticket_id, Caller: t.caller, Status: t.status })));
-            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data");
-            XLSX.writeFile(wb, "Report.xlsx");
+            const ws = XLSX.utils.json_to_sheet(adminTickets.map(t => ({ TicketID: t.ticket_id, Caller: t.caller, Issue: t.short_description, Status: t.status })));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data_FTH");
+            XLSX.writeFile(wb, "Report_FTH.xlsx");
         };
     </script>
 </body>
